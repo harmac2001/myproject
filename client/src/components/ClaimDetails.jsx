@@ -96,6 +96,24 @@ export default function ClaimDetails({ incidentId }) {
 
     const handleSubmit = async () => {
         setSaving(true)
+
+        const requiredFields = [
+            { key: 'received_date', label: 'Claim Received Date' },
+            { key: 'surrogate_claimant_id', label: formData.directly_claimant ? 'Claimant' : 'Subrogate Claimant' },
+            { key: 'loss_type_id', label: 'Type of Loss' },
+            { key: 'loss_cause_id', label: 'Cause of Loss' },
+            { key: 'amount', label: 'Claim Amount' },
+            { key: 'currency_id', label: 'Claim Currency' }
+        ]
+
+        const missingFields = requiredFields.filter(field => !formData[field.key])
+
+        if (missingFields.length > 0) {
+            alert(`Please fill in the following mandatory fields:\n${missingFields.map(f => `- ${f.label}`).join('\n')}`)
+            setSaving(false)
+            return
+        }
+
         try {
             const res = await fetch(`http://localhost:5000/api/claims/${incidentId}`, {
                 method: 'POST',
@@ -142,7 +160,7 @@ export default function ClaimDetails({ incidentId }) {
 
                 {/* Row 1 */}
                 <div className="col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Claim Received Date</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Claim Received Date <span className="text-red-500">*</span></label>
                     <DateInput
                         className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
                         value={formData.received_date}
@@ -179,7 +197,7 @@ export default function ClaimDetails({ incidentId }) {
                     </button>
                 </div>
                 <div className="col-span-5">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">{claimantLabel}</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">{claimantLabel} <span className="text-red-500">*</span></label>
                     <SearchableSelect
                         options={claimantOptions}
                         value={formData.surrogate_claimant_id}
@@ -202,7 +220,7 @@ export default function ClaimDetails({ incidentId }) {
 
                 {/* Row 2 */}
                 <div className="col-span-6">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Type of Loss</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Type of Loss <span className="text-red-500">*</span></label>
                     <SearchableSelect
                         options={lossTypes}
                         value={formData.loss_type_id}
@@ -213,7 +231,7 @@ export default function ClaimDetails({ incidentId }) {
                     />
                 </div>
                 <div className="col-span-6">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Cause of Loss</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Cause of Loss <span className="text-red-500">*</span></label>
                     <SearchableSelect
                         options={lossCauses}
                         value={formData.loss_cause_id}
@@ -226,7 +244,7 @@ export default function ClaimDetails({ incidentId }) {
 
                 {/* Row 3 */}
                 <div className="col-span-3">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Claim Amount</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Claim Amount <span className="text-red-500">*</span></label>
                     <input
                         type="number"
                         className="input-field w-full py-2.5 px-3 bg-white border border-slate-300 rounded-md disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
@@ -236,7 +254,7 @@ export default function ClaimDetails({ incidentId }) {
                     />
                 </div>
                 <div className="col-span-3">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Claim Currency</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Claim Currency <span className="text-red-500">*</span></label>
                     <div className="flex gap-1">
                         {currencies.slice(0, 3).map(curr => (
                             <button

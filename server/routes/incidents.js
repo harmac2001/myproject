@@ -395,6 +395,89 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// POST create sub-incident
+router.post('/:id/subincident', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // 1. Get current incident data
+        const currentIncidentResult = await pool.request()
+            .input('id', sql.Int, id)
+            .query('SELECT * FROM incident WHERE id = @id');
+
+        if (currentIncidentResult.recordset.length === 0) {
+            return res.status(404).send('Incident not found');
+        }
+
+        const currentIncident = currentIncidentResult.recordset[0];
+
+        // 2. Get next sub-reference number
+        const refResult = await pool.request()
+            .input('year', sql.Int, currentIncident.reference_year)
+            .input('ref_num', sql.Int, currentIncident.reference_number)
+            .query('SELECT ISNULL(MAX(reference_sub_number), 0) + 1 as next_sub_ref FROM incident WHERE reference_year = @year AND reference_number = @ref_num');
+
+        const next_sub_ref = refResult.recordset[0].next_sub_ref;
+
+        // 3. Insert new incident with copied data and new sub-reference
+        const insertResult = await pool.request()
+            .input('reference_number', sql.Int, currentIncident.reference_number)
+            .input('reference_year', sql.Int, currentIncident.reference_year)
+            .input('reference_sub_number', sql.Int, next_sub_ref)
+            .input('incident_date', sql.Date, currentIncident.incident_date)
+            .input('status', sql.NVarChar, currentIncident.status)
+            .input('description', sql.NVarChar, currentIncident.description)
+            .input('ship_id', sql.Int, currentIncident.ship_id)
+            .input('member_id', sql.Int, currentIncident.member_id)
+            .input('owner_id', sql.Int, currentIncident.owner_id)
+            .input('club_id', sql.Int, currentIncident.club_id)
+            .input('handler_id', sql.Int, currentIncident.handler_id)
+            .input('local_office_id', sql.Int, currentIncident.local_office_id)
+            .input('type_id', sql.Int, currentIncident.type_id)
+            .input('reporter_id', sql.Int, currentIncident.reporter_id)
+            .input('local_agent_id', sql.Int, currentIncident.local_agent_id)
+            .input('place_id', sql.Int, currentIncident.place_id)
+            .input('closing_date', sql.Date, currentIncident.closing_date)
+            .input('estimated_disposal_date', sql.Date, currentIncident.estimated_disposal_date)
+            .input('berthing_date', sql.Date, currentIncident.berthing_date)
+            .input('voyage_and_leg', sql.NVarChar, currentIncident.voyage_and_leg)
+            .input('club_reference', sql.NVarChar, currentIncident.club_reference)
+            .input('reporting_date', sql.Date, currentIncident.reporting_date)
+            .input('time_bar_date', sql.Date, currentIncident.time_bar_date)
+            .input('latest_report_date', sql.Date, currentIncident.latest_report_date)
+            .input('next_review_date', sql.Date, currentIncident.next_review_date)
+            .query(`
+                INSERT INTO incident (
+                    reference_number, reference_year, reference_sub_number, incident_date, status, description, 
+                    ship_id, member_id, owner_id, club_id, handler_id,
+                    local_office_id, type_id, reporter_id, local_agent_id, place_id,
+                    closing_date, estimated_disposal_date, berthing_date, voyage_and_leg,
+                    club_reference, reporting_date, time_bar_date, latest_report_date, next_review_date
+                )
+                OUTPUT INSERTED.id
+                VALUES (
+                    @reference_number, @reference_year, @reference_sub_number, @incident_date, @status, @description, 
+                    @ship_id, @member_id, @owner_id, @club_id, @handler_id,
+                    @local_office_id, @type_id, @reporter_id, @local_agent_id, @place_id,
+                    @closing_date, @estimated_disposal_date, @berthing_date, @voyage_and_leg,
+                    @club_reference, @reporting_date, @time_bar_date, @latest_report_date, @next_review_date
+                )
+            `);
+
+        const newIncidentId = insertResult.recordset[0].id;
+
+        res.status(201).json({
+            message: 'Sub-incident created successfully',
+            id: newIncidentId
+        });
+
+    } catch (err) {
+        console.error('Error creating sub-incident:', err);
+        res.status(500).send(err.message);
+    }
+});
+
 // DELETE incident
 router.delete('/:id', async (req, res) => {
     try {

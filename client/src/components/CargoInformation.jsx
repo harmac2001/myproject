@@ -78,6 +78,28 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+
+        const requiredFields = [
+            { key: 'cargo_type_id', label: 'Type of Cargo' },
+            { key: 'description', label: 'Description' },
+            { key: 'loading_port_ids', label: 'Port of Loading', isArray: true },
+            { key: 'discharge_port_ids', label: 'Port of Discharge', isArray: true },
+            { key: 'shipper_ids', label: 'Shippers', isArray: true },
+            { key: 'receiver_ids', label: 'Receivers', isArray: true }
+        ]
+
+        const missingFields = requiredFields.filter(field => {
+            if (field.isArray) {
+                return !formData[field.key] || formData[field.key].length === 0
+            }
+            return !formData[field.key]
+        })
+
+        if (missingFields.length > 0) {
+            alert(`Please fill in the following mandatory fields:\n${missingFields.map(f => `- ${f.label}`).join('\n')}`)
+            return
+        }
+
         setSaving(true)
 
         // Map frontend field names to backend/database field names
@@ -156,7 +178,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
 
                 {/* Type of Cargo */}
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Type of Cargo</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Type of Cargo <span className="text-red-500">*</span></label>
                     <SearchableSelect
                         options={cargoTypes}
                         value={formData.cargo_type_id}
@@ -169,7 +191,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
 
                 {/* Description */}
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Description <span className="text-red-500">*</span></label>
                     <input
                         type="text"
                         className="input-field w-full py-2.5 px-3 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
@@ -181,7 +203,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
 
                 {/* Port of Loading */}
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Port of Loading</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Port of Loading <span className="text-red-500">*</span></label>
                     {isEditing ? (
                         <MultiSelect
                             options={ports}
@@ -202,7 +224,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
 
                 {/* Port of Discharge */}
                 <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Port of Discharge</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Port of Discharge <span className="text-red-500">*</span></label>
                     {isEditing ? (
                         <MultiSelect
                             options={ports}
@@ -223,7 +245,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
 
                 {/* Shippers */}
                 <div className="col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Shippers</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Shippers <span className="text-red-500">*</span></label>
                     {isEditing ? (
                         <MultiSelect
                             options={traders}
@@ -244,7 +266,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
 
                 {/* Receivers */}
                 <div className="col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Receivers</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Receivers <span className="text-red-500">*</span></label>
                     {isEditing ? (
                         <MultiSelect
                             options={traders}

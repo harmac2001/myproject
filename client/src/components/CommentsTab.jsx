@@ -52,6 +52,14 @@ export default function CommentsTab({ incidentId }) {
             return
         }
 
+        // Validation: Check if all comments have subject and text
+        const invalidComments = comments.filter(c => !c.subject || !c.comment_text || c.comment_text.trim() === '' || c.comment_text === '<br>')
+
+        if (invalidComments.length > 0) {
+            alert('All comments must have a Subject and Comment text.')
+            return
+        }
+
         setSaving(true)
         try {
             // Process all comments
@@ -126,7 +134,7 @@ export default function CommentsTab({ incidentId }) {
                         <div className="space-y-3">
                             {/* Subject */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Subject</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Subject <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
@@ -152,7 +160,7 @@ export default function CommentsTab({ incidentId }) {
 
                             {/* Comment Text */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Comment</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Comment <span className="text-red-500">*</span></label>
                                 <div className="border border-slate-300 rounded-md overflow-hidden">
                                     {/* Toolbar */}
                                     <div className="bg-slate-100 border-b border-slate-300 p-2 flex gap-2">
@@ -241,7 +249,7 @@ export default function CommentsTab({ incidentId }) {
                             <div className="space-y-3">
                                 {/* Subject */}
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Subject</label>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Subject <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
@@ -253,7 +261,7 @@ export default function CommentsTab({ incidentId }) {
 
                                 {/* Comment Text */}
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Comment</label>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Comment <span className="text-red-500">*</span></label>
                                     <div className="border border-slate-300 rounded-md overflow-hidden">
                                         {/* Toolbar (only in edit mode) */}
                                         {isEditing && (
