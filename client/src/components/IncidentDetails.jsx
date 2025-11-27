@@ -7,6 +7,7 @@ import DateInput from './DateInput'
 import ClaimDetails from './ClaimDetails'
 import CommentsTab from './CommentsTab'
 import AddMemberModal from './AddMemberModal'
+import Header from './Header'
 
 export default function IncidentDetails() {
     const { id } = useParams()
@@ -223,9 +224,38 @@ export default function IncidentDetails() {
     const handleSubmit = async (e) => {
         e.preventDefault()
 
-        if (!formData.local_office_id) {
-            alert('Please select a Handling Office')
+        const requiredFields = [
+            { key: 'local_office_id', label: 'Handling Office' },
+            { key: 'ship_id', label: 'Vessel' },
+            { key: 'incident_date', label: 'Date of Incident' },
+            { key: 'place_id', label: 'Place of Incident' },
+            { key: 'club_id', label: 'Client' },
+            { key: 'member_id', label: 'Members' },
+            { key: 'owner_id', label: 'Managers' },
+            { key: 'type_id', label: 'Type of Incident' },
+            { key: 'reporting_date', label: 'Date Reported' },
+            { key: 'local_agent_id', label: 'Local Agents' },
+            { key: 'handler_id', label: 'Claim Handler' },
+            { key: 'next_review_date', label: 'Next Review Date' }
+        ]
+
+        const missingFields = requiredFields.filter(field => !formData[field.key])
+
+        if (missingFields.length > 0) {
+            alert(`Please fill in the following mandatory fields:\n${missingFields.map(f => `- ${f.label}`).join('\n')}`)
             return
+        }
+
+        // Validate Next Review Date is in the future
+        if (formData.next_review_date) {
+            const nextReview = new Date(formData.next_review_date)
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+
+            if (nextReview <= today) {
+                alert('Next Review Date must be after today')
+                return
+            }
         }
 
         setSaving(true)
@@ -416,6 +446,7 @@ export default function IncidentDetails() {
 
     return (
         <div className="min-h-screen bg-white">
+            <Header />
             {/* Top Navigation Bar */}
             <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-2 overflow-x-auto">
                 {!hasCargo && (
@@ -575,7 +606,7 @@ export default function IncidentDetails() {
 
                             {/* Row 2: Vessel, Voyage, Arrival, Incident Date, Place */}
                             <div className="col-span-4">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Vessel</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Vessel <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={ships}
                                     value={formData.ship_id}
@@ -607,7 +638,7 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Date of Incident</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Date of Incident <span className="text-red-500">*</span></label>
                                 <DateInput
                                     className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
                                     value={formData.incident_date}
@@ -616,7 +647,7 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Place of Incident</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Place of Incident <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={ports}
                                     value={formData.place_id}
@@ -629,7 +660,7 @@ export default function IncidentDetails() {
 
                             {/* Row 3: Client, Client Ref */}
                             <div className="col-span-6">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Client</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Client <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={clubs}
                                     value={formData.club_id}
@@ -652,7 +683,7 @@ export default function IncidentDetails() {
 
                             {/* Row 4: Members, Managers */}
                             <div className="col-span-6">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Members</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Members <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={members}
                                     value={formData.member_id}
@@ -665,7 +696,7 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-6">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Managers</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Managers <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={members}
                                     value={formData.owner_id}
@@ -678,7 +709,7 @@ export default function IncidentDetails() {
 
                             {/* Row 5: Type, Reporting Date, Reported By */}
                             <div className="col-span-4">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Type of Incident</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Type of Incident <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={incidentTypes}
                                     value={formData.type_id}
@@ -689,7 +720,7 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Date Reported</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Date Reported <span className="text-red-500">*</span></label>
                                 <DateInput
                                     className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
                                     value={formData.reporting_date}
@@ -711,7 +742,7 @@ export default function IncidentDetails() {
 
                             {/* Row 6: Local Agents, Claim Handler, Time Bar, Latest Report, Next Review */}
                             <div className="col-span-4">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Local Agents</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Local Agents <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={agents}
                                     value={formData.local_agent_id}
@@ -722,7 +753,7 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Claim Handler</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Claim Handler <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={claimHandlers}
                                     value={formData.handler_id}
@@ -751,7 +782,7 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Next Review Date</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Next Review Date <span className="text-red-500">*</span></label>
                                 <DateInput
                                     className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
                                     value={formData.next_review_date}

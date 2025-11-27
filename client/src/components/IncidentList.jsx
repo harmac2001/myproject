@@ -2,6 +2,7 @@ import { Search, Plus, ChevronDown } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import leftIcon from '../assets/left_icon.jpg'
+import Header from './Header'
 
 const SearchableSelect = ({ options, value, onChange, placeholder, className }) => {
     const [isOpen, setIsOpen] = useState(false)
@@ -292,27 +293,9 @@ export default function IncidentList() {
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
             {/* Header */}
-            <header className="w-full bg-slate-700 shadow-lg px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <img src={leftIcon} alt="Proinde" className="h-[43px] grayscale invert brightness-200 mix-blend-screen" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-white">Incident Management System</h2>
-                </div>
-            </header>
+            <Header />
 
-            {/* Action Bar */}
-            <div className="w-full bg-white shadow-sm border-b border-slate-200 px-4 py-3">
-                <div className="flex items-center justify-end">
-                    <button
-                        onClick={() => navigate('/incident/new')}
-                        className="btn-primary flex items-center gap-2"
-                    >
-                        <Plus className="h-5 w-5" />
-                        New Incident
-                    </button>
-                </div>
-            </div>
+
 
             <main className="w-full px-4 py-8">
                 {/* Filters */}
@@ -379,6 +362,15 @@ export default function IncidentList() {
                                 </svg>
                                 Reset
                             </button>
+
+                            {/* New Incident Button */}
+                            <button
+                                onClick={() => navigate('/incident/new')}
+                                className="inline-flex items-center justify-center rounded-lg bg-[#3A6082] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#2c4a66] focus:outline-none focus:ring-2 focus:ring-[#3A6082] focus:ring-offset-2 transition-all duration-200 flex items-center gap-2"
+                            >
+                                <Plus className="h-5 w-5" />
+                                New Incident
+                            </button>
                         </div>
                     </div>
 
@@ -425,7 +417,7 @@ export default function IncidentList() {
                                         <td className="px-4 py-1.5 text-sm whitespace-nowrap overflow-hidden text-ellipsis" style={{ width: '115px' }}>
                                             <button
                                                 onClick={() => window.open(`/incident/${incident.id}`, '_blank')}
-                                                className="font-bold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left truncate block w-full"
+                                                className="font-bold text-[#3A6082] hover:text-[#2c4a66] hover:underline cursor-pointer text-left truncate block w-full"
                                             >
                                                 {incident.formatted_reference}
                                             </button>
