@@ -272,13 +272,21 @@ export default function IncidentDetails() {
             ? 'http://localhost:5000/api/incidents'
             : `http://localhost:5000/api/incidents/${id}`
 
+        // Sanitize data: convert empty strings to null for backend
+        const sanitizedData = Object.fromEntries(
+            Object.entries(formData).map(([key, value]) => {
+                if (value === '') return [key, null];
+                return [key, value];
+            })
+        );
+
         try {
             const response = await fetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(sanitizedData)
             })
 
             if (response.ok) {
