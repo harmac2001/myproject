@@ -252,6 +252,8 @@ router.get('/:id', async (req, res) => {
 
         res.json(result.recordset[0]);
     } catch (err) {
+        const fs = require('fs');
+        fs.appendFileSync('server_debug.log', `Error fetching incident ${req.params.id}: ${err.message}\nStack: ${err.stack}\n`);
         res.status(500).send(err.message);
     }
 });
@@ -266,22 +268,49 @@ router.post('/', async (req, res) => {
             club_reference, reporting_date, time_bar_date, latest_report_date, next_review_date
         } = req.body;
         const pool = await poolPromise;
+        const fs = require('fs');
 
-        // Generate reference number based on current year and local_office_id
-        const current_year = new Date().getFullYear();
+        if (!reporter_id) {
+            return res.status(400).send('Reported By is required');
+        }
 
-        const refResult = await pool.request()
-            .input('year', sql.Int, current_year)
-            .input('office_id', sql.Int, local_office_id)
-            .query('SELECT ISNULL(MAX(reference_number), 0) + 1 as next_ref FROM incident WHERE reference_year = @year AND local_office_id = @office_id');
+        if (!berthing_date) {
+            return res.status(400).send('Arrival Date (Berthing Date) is required');
+        }
 
-        const next_ref = refResult.recordset[0].next_ref;
+        // Check if this is a sub-incident (reference_number and reference_year provided)
+        let next_ref, next_sub_ref, ref_year;
 
-        await pool.request()
+        if (req.body.reference_number && req.body.reference_year) {
+            // Sub-incident: Use provided ref number and year, calculate next sub-ref
+            next_ref = req.body.reference_number;
+            ref_year = req.body.reference_year;
+
+            const subRefResult = await pool.request()
+                .input('year', sql.Int, ref_year)
+                .input('ref_num', sql.Int, next_ref)
+                .query('SELECT ISNULL(MAX(reference_sub_number), 0) + 1 as next_sub_ref FROM incident WHERE reference_year = @year AND reference_number = @ref_num');
+
+            next_sub_ref = subRefResult.recordset[0].next_sub_ref;
+            fs.appendFileSync('server_debug.log', `Creating sub-incident. Ref: ${next_ref}/${ref_year}, Next Sub-Ref: ${next_sub_ref}\n`);
+        } else {
+            // New Incident: Generate new reference number
+            ref_year = new Date().getFullYear();
+            const refResult = await pool.request()
+                .input('year', sql.Int, ref_year)
+                .input('office_id', sql.Int, local_office_id)
+                .query('SELECT ISNULL(MAX(reference_number), 0) + 1 as next_ref FROM incident WHERE reference_year = @year AND local_office_id = @office_id');
+
+            next_ref = refResult.recordset[0].next_ref;
+            next_sub_ref = 0; // Main incidents have sub-ref 0
+            fs.appendFileSync('server_debug.log', `Creating new incident. Next Ref: ${next_ref}\n`);
+        }
+
+        const insertResult = await pool.request()
             .input('reference_number', sql.Int, next_ref)
-            .input('reference_year', sql.Int, current_year)
-            .input('reference_sub_number', sql.Int, 0)
-            .input('incident_date', sql.Date, incident_date)
+            .input('reference_year', sql.Int, ref_year)
+            .input('reference_sub_number', sql.Int, next_sub_ref)
+            .input('incident_date', sql.Date, incident_date || null)
             .input('status', sql.NVarChar, status)
             .input('description', sql.NVarChar, description)
             .input('ship_id', sql.Int, ship_id)
@@ -294,15 +323,15 @@ router.post('/', async (req, res) => {
             .input('reporter_id', sql.Int, reporter_id)
             .input('local_agent_id', sql.Int, local_agent_id)
             .input('place_id', sql.Int, place_id)
-            .input('closing_date', sql.Date, closing_date)
-            .input('estimated_disposal_date', sql.Date, estimated_disposal_date)
-            .input('berthing_date', sql.Date, berthing_date)
+            .input('closing_date', sql.Date, closing_date || null)
+            .input('estimated_disposal_date', sql.Date, estimated_disposal_date || null)
+            .input('berthing_date', sql.Date, berthing_date || null)
             .input('voyage_and_leg', sql.NVarChar, voyage_and_leg)
             .input('club_reference', sql.NVarChar, club_reference)
-            .input('reporting_date', sql.Date, reporting_date)
-            .input('time_bar_date', sql.Date, time_bar_date)
-            .input('latest_report_date', sql.Date, latest_report_date)
-            .input('next_review_date', sql.Date, next_review_date)
+            .input('reporting_date', sql.Date, reporting_date || null)
+            .input('time_bar_date', sql.Date, time_bar_date || null)
+            .input('latest_report_date', sql.Date, latest_report_date || null)
+            .input('next_review_date', sql.Date, next_review_date || null)
             .query(`
                 INSERT INTO incident (
                     reference_number, reference_year, reference_sub_number, incident_date, status, description, 
@@ -317,11 +346,16 @@ router.post('/', async (req, res) => {
                     @local_office_id, @type_id, @reporter_id, @local_agent_id, @place_id,
                     @closing_date, @estimated_disposal_date, @berthing_date, @voyage_and_leg,
                     @club_reference, @reporting_date, @time_bar_date, @latest_report_date, @next_review_date
-                )
+                );
+                SELECT SCOPE_IDENTITY() AS id;
             `);
 
-        res.status(201).send({ message: 'Incident created successfully' });
+        const newIncidentId = insertResult.recordset[0].id;
+
+        res.status(201).send({ message: 'Incident created successfully', id: newIncidentId });
     } catch (err) {
+        const fs = require('fs');
+        fs.appendFileSync('server_debug.log', `Error creating incident: ${err.message}\nStack: ${err.stack}\n`);
         res.status(500).send(err.message);
     }
 });
@@ -338,9 +372,17 @@ router.put('/:id', async (req, res) => {
         } = req.body;
         const pool = await poolPromise;
 
+        if (!reporter_id) {
+            return res.status(400).send('Reported By is required');
+        }
+
+        if (!berthing_date) {
+            return res.status(400).send('Arrival Date (Berthing Date) is required');
+        }
+
         await pool.request()
             .input('id', sql.Int, id)
-            .input('incident_date', sql.Date, incident_date)
+            .input('incident_date', sql.Date, incident_date || null)
             .input('status', sql.NVarChar, status)
             .input('description', sql.NVarChar, description)
             .input('ship_id', sql.Int, ship_id)
@@ -353,18 +395,19 @@ router.put('/:id', async (req, res) => {
             .input('reporter_id', sql.Int, reporter_id)
             .input('local_agent_id', sql.Int, local_agent_id)
             .input('place_id', sql.Int, place_id)
-            .input('closing_date', sql.Date, closing_date)
-            .input('estimated_disposal_date', sql.Date, estimated_disposal_date)
-            .input('berthing_date', sql.Date, berthing_date)
+            .input('closing_date', sql.Date, closing_date || null)
+            .input('estimated_disposal_date', sql.Date, estimated_disposal_date || null)
+            .input('berthing_date', sql.Date, berthing_date || null)
             .input('voyage_and_leg', sql.NVarChar, voyage_and_leg)
             .input('club_reference', sql.NVarChar, club_reference)
-            .input('reporting_date', sql.Date, reporting_date)
-            .input('time_bar_date', sql.Date, time_bar_date)
-            .input('latest_report_date', sql.Date, latest_report_date)
-            .input('next_review_date', sql.Date, next_review_date)
+            .input('reporting_date', sql.Date, reporting_date || null)
+            .input('time_bar_date', sql.Date, time_bar_date || null)
+            .input('latest_report_date', sql.Date, latest_report_date || null)
+            .input('next_review_date', sql.Date, next_review_date || null)
             .query(`
-                UPDATE incident 
-                SET incident_date = @incident_date,
+                UPDATE incident
+                SET 
+                    incident_date = @incident_date,
                     status = @status,
                     description = @description,
                     ship_id = @ship_id,
@@ -385,7 +428,8 @@ router.put('/:id', async (req, res) => {
                     reporting_date = @reporting_date,
                     time_bar_date = @time_bar_date,
                     latest_report_date = @latest_report_date,
-                    next_review_date = @next_review_date
+                    next_review_date = @next_review_date,
+                    last_modified_date = GETDATE()
                 WHERE id = @id
             `);
 
@@ -400,6 +444,8 @@ router.post('/:id/subincident', async (req, res) => {
     try {
         const { id } = req.params;
         const pool = await poolPromise;
+        const fs = require('fs');
+        fs.appendFileSync('server_debug.log', `\n[${new Date().toISOString()}] Creating sub-incident for ID: ${id}\n`);
 
         // 1. Get current incident data
         const currentIncidentResult = await pool.request()
@@ -407,10 +453,12 @@ router.post('/:id/subincident', async (req, res) => {
             .query('SELECT * FROM incident WHERE id = @id');
 
         if (currentIncidentResult.recordset.length === 0) {
+            fs.appendFileSync('server_debug.log', `Incident ${id} not found\n`);
             return res.status(404).send('Incident not found');
         }
 
         const currentIncident = currentIncidentResult.recordset[0];
+        fs.appendFileSync('server_debug.log', `Found parent incident: ${JSON.stringify(currentIncident)}\n`);
 
         // 2. Get next sub-reference number
         const refResult = await pool.request()
@@ -419,8 +467,10 @@ router.post('/:id/subincident', async (req, res) => {
             .query('SELECT ISNULL(MAX(reference_sub_number), 0) + 1 as next_sub_ref FROM incident WHERE reference_year = @year AND reference_number = @ref_num');
 
         const next_sub_ref = refResult.recordset[0].next_sub_ref;
+        fs.appendFileSync('server_debug.log', `Calculated next_sub_ref: ${next_sub_ref}\n`);
 
         // 3. Insert new incident with copied data and new sub-reference
+        fs.appendFileSync('server_debug.log', `Attempting to insert sub-incident...\n`);
         const insertResult = await pool.request()
             .input('reference_number', sql.Int, currentIncident.reference_number)
             .input('reference_year', sql.Int, currentIncident.reference_year)
@@ -455,17 +505,18 @@ router.post('/:id/subincident', async (req, res) => {
                     closing_date, estimated_disposal_date, berthing_date, voyage_and_leg,
                     club_reference, reporting_date, time_bar_date, latest_report_date, next_review_date
                 )
-                OUTPUT INSERTED.id
                 VALUES (
                     @reference_number, @reference_year, @reference_sub_number, @incident_date, @status, @description, 
                     @ship_id, @member_id, @owner_id, @club_id, @handler_id,
                     @local_office_id, @type_id, @reporter_id, @local_agent_id, @place_id,
                     @closing_date, @estimated_disposal_date, @berthing_date, @voyage_and_leg,
                     @club_reference, @reporting_date, @time_bar_date, @latest_report_date, @next_review_date
-                )
+                );
+                SELECT SCOPE_IDENTITY() AS id;
             `);
 
         const newIncidentId = insertResult.recordset[0].id;
+        fs.appendFileSync('server_debug.log', `Sub-incident created with ID: ${newIncidentId}\n`);
 
         res.status(201).json({
             message: 'Sub-incident created successfully',
@@ -473,6 +524,12 @@ router.post('/:id/subincident', async (req, res) => {
         });
 
     } catch (err) {
+        try {
+            const fs = require('fs');
+            fs.appendFileSync('server_debug.log', `Error creating sub-incident: ${err.message}\nStack: ${err.stack}\n`);
+        } catch (logErr) {
+            console.error('Failed to write to log:', logErr);
+        }
         console.error('Error creating sub-incident:', err);
         res.status(500).send(err.message);
     }

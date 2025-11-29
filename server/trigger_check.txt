@@ -1,0 +1,2 @@
+Triggers on incident table:
+No triggers found.

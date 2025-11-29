@@ -118,7 +118,21 @@ export default function IncidentDetails() {
             const today = new Date()
             const oneYearLater = new Date(today)
             oneYearLater.setFullYear(today.getFullYear() + 1)
-            setFormData(prev => ({ ...prev, time_bar_date: oneYearLater.toISOString().split('T')[0] }))
+
+            if (location.state?.parentIncident) {
+                const parent = location.state.parentIncident
+                setFormData(prev => ({
+                    ...prev,
+                    ...parent,
+                    id: '', // Clear ID for new record
+                    incident_date: new Date().toISOString().split('T')[0], // Reset incident date to today
+                    status: 'OPEN', // Reset status
+                    time_bar_date: oneYearLater.toISOString().split('T')[0],
+                    // Keep other fields from parent
+                }))
+            } else {
+                setFormData(prev => ({ ...prev, time_bar_date: oneYearLater.toISOString().split('T')[0] }))
+            }
         }
 
         // Update isEditing when navigating to a new incident (e.g. sub-incident)
@@ -161,7 +175,8 @@ export default function IncidentDetails() {
                         reporter_id: data.reporter_id || '',
                         local_agent_id: data.local_agent_id || '',
                         place_id: data.place_id || '',
-                        owner_id: data.owner_id || ''
+                        owner_id: data.owner_id || '',
+                        reference_year: data.reference_year || ''
                     })
                     setFormattedReference(data.formatted_reference || '')
                     setLoading(false)
@@ -243,7 +258,9 @@ export default function IncidentDetails() {
             { key: 'reporting_date', label: 'Date Reported' },
             { key: 'local_agent_id', label: 'Local Agents' },
             { key: 'handler_id', label: 'Claim Handler' },
-            { key: 'next_review_date', label: 'Next Review Date' }
+            { key: 'next_review_date', label: 'Next Review Date' },
+            { key: 'reporter_id', label: 'Reported By' },
+            { key: 'berthing_date', label: 'Arrival Date' }
         ]
 
         const missingFields = requiredFields.filter(field => !formData[field.key])
@@ -299,11 +316,13 @@ export default function IncidentDetails() {
                     // window.location.reload() // Removed reload to prevent full page refresh
                 }
             } else {
-                alert('Error saving incident')
+                const errorText = await response.text()
+                console.error('Save incident failed:', response.status, errorText)
+                alert(`Error saving incident: ${errorText}`)
             }
         } catch (err) {
             console.error('Error saving incident:', err)
-            alert('Error saving incident')
+            alert(`Error saving incident: ${err.message}`)
         } finally {
             setSaving(false)
         }
@@ -344,15 +363,17 @@ export default function IncidentDetails() {
     }
 
     const handleMemberChange = (val) => {
-        setFormData({ ...formData, member_id: val })
+        const updates = { member_id: val }
+        // Suggest same member_id on "Manager" field for new incidents
+        if (isNew) {
+            updates.owner_id = val
+        }
+        setFormData({ ...formData, ...updates })
+
         // Check if member exists in list
         const member = members.find(m => m.id === val)
         if (!member && val) {
-            setPendingMemberName(val) // Assuming val is the name if not found? 
-            // Actually SearchableSelect returns ID if found, or name if created?
-            // If allowCreate is true, it might return the string typed.
-            // But SearchableSelect implementation handles creation via onCreateNew prop.
-            // So here val is likely the ID.
+            setPendingMemberName(val)
         }
     }
 
@@ -444,28 +465,18 @@ export default function IncidentDetails() {
     const handleNewSubIncident = async () => {
         if (isNew) return
 
-        if (window.confirm("Are you sure you want to create a new Sub-Incident? This will copy the current incident details to a new record.")) {
-            setLoading(true)
-            try {
-                const response = await fetch(`http://localhost:5000/api/incidents/${id}/subincident`, {
-                    method: 'POST'
-                })
-
-                if (response.ok) {
-                    const data = await response.json()
-                    // Navigate to the new sub-incident with edit mode enabled
-                    navigate(`/incident/${data.id}`, { state: { isEditing: true } })
-                } else {
-                    const errorText = await response.text()
-                    alert(`Error creating sub-incident: ${errorText}`)
-                    setLoading(false)
+        // Navigate to new incident page with current data as parent
+        navigate('/incident/new', {
+            state: {
+                isEditing: true,
+                parentIncident: {
+                    ...formData,
+                    reference_number: formattedReference.split('/')[0], // Extract ref number
+                    reference_year: formData.reference_year || new Date().getFullYear(), // Use stored year or current year
+                    id: id // Parent ID
                 }
-            } catch (err) {
-                console.error('Error creating sub-incident:', err)
-                alert(`Error creating sub-incident: ${err.message}`)
-                setLoading(false)
             }
-        }
+        })
     }
 
     if (loading) {
@@ -545,8 +556,8 @@ export default function IncidentDetails() {
             {/* Tabs and Reference Number */}
             <div className="px-4 mt-4 border-b border-slate-200 flex items-center justify-between">
                 {/* Reference Number */}
-                <div className="mr-8">
-                    <h1 className="text-2xl font-bold text-[#3A6082]">{formattedReference || 'New'}</h1>
+                <div className="mr-12">
+                    <h1 className="text-xl font-bold text-[#3A6082]">{formattedReference || 'New'}</h1>
                 </div>
 
                 {/* Tabs */}
@@ -580,72 +591,47 @@ export default function IncidentDetails() {
                 {activeTab === 'details' && (
                     <div className="border border-slate-200 rounded-b-md p-4 bg-white">
                         <div className="grid grid-cols-12 gap-x-4 gap-y-4">
-                            {/* Row 1: Handling Office/Date, Status/Place */}
-                            <div className="col-span-6">
-                                <div className="mb-4">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Handling Office <span className="text-red-500">*</span></label>
-                                    <SearchableSelect
-                                        options={offices}
-                                        value={formData.local_office_id}
-                                        onChange={(val) => setFormData({ ...formData, local_office_id: val })}
-                                        placeholder="Select Office..."
-                                        className="w-full"
-                                        disabled={!isEditing}
-                                        labelKey="location"
-                                        searchable={false}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Date of Incident <span className="text-red-500">*</span></label>
-                                    <DateInput
-                                        className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
-                                        value={formData.incident_date}
-                                        onChange={(e) => setFormData({ ...formData, incident_date: e.target.value })}
-                                        disabled={!isEditing}
-                                    />
-                                </div>
+                            {/* Row 1: Handling Office, Status */}
+                            <div className="col-span-3">
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Handling Office <span className="text-red-500">*</span></label>
+                                <SearchableSelect
+                                    options={offices}
+                                    value={formData.local_office_id}
+                                    onChange={(val) => setFormData({ ...formData, local_office_id: val })}
+                                    placeholder="Select Office..."
+                                    className="w-full"
+                                    disabled={!isEditing}
+                                    labelKey="location"
+                                    searchable={false}
+                                />
                             </div>
+                            <div className="col-span-3">
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Status</label>
+                                <SearchableSelect
+                                    options={statusOptions}
+                                    value={formData.status}
+                                    onChange={(val) => {
+                                        const updates = { status: val };
+                                        if (val !== 'OPEN' && val !== 'OUTSTANDING') {
+                                            const today = new Date();
+                                            const twoYearsLater = new Date(today);
+                                            twoYearsLater.setFullYear(today.getFullYear() + 2);
 
-                            <div className="col-span-6">
-                                <div className="mb-4">
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Status</label>
-                                    <SearchableSelect
-                                        options={statusOptions}
-                                        value={formData.status}
-                                        onChange={(val) => {
-                                            const updates = { status: val };
-                                            if (val !== 'OPEN' && val !== 'OUTSTANDING') {
-                                                const today = new Date();
-                                                const twoYearsLater = new Date(today);
-                                                twoYearsLater.setFullYear(today.getFullYear() + 2);
-
-                                                updates.closing_date = today.toISOString().split('T')[0];
-                                                updates.estimated_disposal_date = twoYearsLater.toISOString().split('T')[0];
-                                            }
-                                            setFormData({ ...formData, ...updates });
-                                        }}
-                                        placeholder="Select Status..."
-                                        className="w-full"
-                                        disabled={!isEditing}
-                                        searchable={false}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">Place of Incident <span className="text-red-500">*</span></label>
-                                    <SearchableSelect
-                                        options={ports}
-                                        value={formData.place_id}
-                                        onChange={(val) => setFormData({ ...formData, place_id: val })}
-                                        placeholder="Select Place..."
-                                        className="w-full"
-                                        disabled={!isEditing}
-                                    />
-                                </div>
+                                            updates.closing_date = today.toISOString().split('T')[0];
+                                            updates.estimated_disposal_date = twoYearsLater.toISOString().split('T')[0];
+                                        }
+                                        setFormData({ ...formData, ...updates });
+                                    }}
+                                    placeholder="Select Status..."
+                                    className="w-full"
+                                    disabled={!isEditing}
+                                    searchable={false}
+                                />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-12 gap-x-4 gap-y-4 mt-4">
-                            {/* Row 2: Vessel, Voyage, Arrival, Conditional Dates */}
+                            {/* Row 2: Vessel, Voyage, Arrival Date, Date of Incident, Place of Incident */}
                             <div className="col-span-4">
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Vessel <span className="text-red-500">*</span></label>
                                 <SearchableSelect
@@ -670,7 +656,7 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Arrival Date</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Arrival Date <span className="text-red-500">*</span></label>
                                 <DateInput
                                     className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
                                     value={formData.berthing_date}
@@ -678,36 +664,29 @@ export default function IncidentDetails() {
                                     disabled={!isEditing}
                                 />
                             </div>
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Date of Incident <span className="text-red-500">*</span></label>
+                                <DateInput
+                                    className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
+                                    value={formData.incident_date}
+                                    onChange={(e) => setFormData({ ...formData, incident_date: e.target.value })}
+                                    disabled={!isEditing}
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Place of Incident <span className="text-red-500">*</span></label>
+                                <SearchableSelect
+                                    options={ports}
+                                    value={formData.place_id}
+                                    onChange={(val) => setFormData({ ...formData, place_id: val })}
+                                    placeholder="Select Place..."
+                                    className="w-full"
+                                    disabled={!isEditing}
+                                />
+                            </div>
+                        </div>
 
-                            {
-                                formData.status !== 'OPEN' && formData.status !== 'OUTSTANDING' ? (
-                                    <>
-                                        <div className="col-span-2">
-                                            <label className="block text-xs font-bold text-slate-700 mb-1">Estimated Disposal Date</label>
-                                            <DateInput
-                                                className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
-                                                value={formData.estimated_disposal_date}
-                                                onChange={(e) => setFormData({ ...formData, estimated_disposal_date: e.target.value })}
-                                                disabled={!isEditing}
-                                            />
-                                        </div>
-                                        <div className="col-span-2">
-                                            <label className="block text-xs font-bold text-slate-700 mb-1">Closing Date</label>
-                                            <DateInput
-                                                className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
-                                                value={formData.closing_date}
-                                                onChange={(e) => setFormData({ ...formData, closing_date: e.target.value })}
-                                                disabled={!isEditing}
-                                            />
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="col-span-4"></div>
-                                    </>
-                                )
-                            }
-
+                        <div className="grid grid-cols-12 gap-x-4 gap-y-4 mt-4">
                             {/* Row 3: Client, Client Ref */}
                             <div className="col-span-6">
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Client <span className="text-red-500">*</span></label>
@@ -779,7 +758,7 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-6">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Reported By</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Reported By <span className="text-red-500">*</span></label>
                                 <SearchableSelect
                                     options={reporters}
                                     value={formData.reporter_id}
@@ -867,14 +846,18 @@ export default function IncidentDetails() {
                                         <Save className="h-4 w-4" />
                                         {saving ? 'Saving...' : 'Save'}
                                     </button>
-                                    {!isNew && (
-                                        <button
-                                            onClick={() => setIsEditing(false)}
-                                            className="bg-[#fbbf24] text-slate-900 px-8 py-2 rounded-md text-sm font-medium hover:bg-[#f59e0b] flex items-center gap-2"
-                                        >
-                                            <Ban className="h-4 w-4" /> Cancel
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => {
+                                            if (isNew) {
+                                                navigate(-1)
+                                            } else {
+                                                setIsEditing(false)
+                                            }
+                                        }}
+                                        className="bg-[#fbbf24] text-slate-900 px-8 py-2 rounded-md text-sm font-medium hover:bg-[#f59e0b] flex items-center gap-2"
+                                    >
+                                        <Ban className="h-4 w-4" /> Cancel
+                                    </button>
                                 </>
                             ) : (
                                 !isNew && (
@@ -910,6 +893,6 @@ export default function IncidentDetails() {
                 onSave={handleMemberSaved}
                 initialName={pendingMemberName}
             />
-        </div>
+        </div >
     )
 }
