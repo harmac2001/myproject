@@ -163,7 +163,18 @@ router.get('/cargo_types', async (req, res) => {
 router.get('/consultants', async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request().query('SELECT id, friendly_name as name FROM service_provider WHERE is_consultant = 1 ORDER BY friendly_name');
+        const result = await pool.request().query(`
+            SELECT 
+                id, 
+                CASE 
+                    WHEN friendly_name IS NOT NULL AND name != friendly_name 
+                    THEN CONCAT(friendly_name, ' (', name, ')')
+                    ELSE COALESCE(friendly_name, name)
+                END as name
+            FROM service_provider 
+            WHERE is_consultant = 1 
+            ORDER BY COALESCE(friendly_name, name)
+        `);
         res.json(result.recordset);
     } catch (err) {
         res.status(500).send(err.message);

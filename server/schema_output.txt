@@ -1,36 +1,38 @@
-Connected to SQL Server
-┌─────────┬───────────────────────────┬─────────────┬────────────┐
-│ (index) │ COLUMN_NAME               │ IS_NULLABLE │ DATA_TYPE  │
-├─────────┼───────────────────────────┼─────────────┼────────────┤
-│ 0       │ 'id'                      │ 'NO'        │ 'bigint'   │
-│ 1       │ 'berthing_date'           │ 'NO'        │ 'date'     │
-│ 2       │ 'closing_date'            │ 'YES'       │ 'date'     │
-│ 3       │ 'club_reference'          │ 'YES'       │ 'varchar'  │
-│ 4       │ 'description'             │ 'YES'       │ 'varchar'  │
-│ 5       │ 'effective_disposal_date' │ 'YES'       │ 'date'     │
-│ 6       │ 'estimated_disposal_date' │ 'YES'       │ 'date'     │
-│ 7       │ 'incident_date'           │ 'YES'       │ 'date'     │
-│ 8       │ 'latest_report_date'      │ 'YES'       │ 'date'     │
-│ 9       │ 'next_review_date'        │ 'YES'       │ 'date'     │
-│ 10      │ 'reference_number'        │ 'NO'        │ 'int'      │
-│ 11      │ 'reference_sub_number'    │ 'NO'        │ 'smallint' │
-│ 12      │ 'reference_year'          │ 'NO'        │ 'int'      │
-│ 13      │ 'reporting_date'          │ 'YES'       │ 'date'     │
-│ 14      │ 'status'                  │ 'NO'        │ 'varchar'  │
-│ 15      │ 'time_bar_date'           │ 'YES'       │ 'date'     │
-│ 16      │ 'voyage_and_leg'          │ 'YES'       │ 'varchar'  │
-│ 17      │ 'club_id'                 │ 'NO'        │ 'bigint'   │
-│ 18      │ 'handler_id'              │ 'YES'       │ 'bigint'   │
-│ 19      │ 'local_agent_id'          │ 'YES'       │ 'bigint'   │
-│ 20      │ 'local_office_id'         │ 'YES'       │ 'bigint'   │
-│ 21      │ 'member_id'               │ 'YES'       │ 'bigint'   │
-│ 22      │ 'owner_id'                │ 'YES'       │ 'bigint'   │
-│ 23      │ 'place_id'                │ 'YES'       │ 'bigint'   │
-│ 24      │ 'reporter_id'             │ 'YES'       │ 'bigint'   │
-│ 25      │ 'ship_id'                 │ 'YES'       │ 'bigint'   │
-│ 26      │ 'type_id'                 │ 'YES'       │ 'bigint'   │
-│ 27      │ 'created_by_user'         │ 'YES'       │ 'varchar'  │
-│ 28      │ 'created_date'            │ 'YES'       │ 'bigint'   │
-│ 29      │ 'last_modified_by_user'   │ 'YES'       │ 'varchar'  │
-│ 30      │ 'last_modified_date'      │ 'YES'       │ 'bigint'   │
-└─────────┴───────────────────────────┴─────────────┴────────────┘
+--- appointment ---
+id
+created_by_user
+created_date
+last_modified_by_user
+last_modified_date
+appointment_date
+final_survey_date
+invoice_chasing_date
+invoice_received_date
+invoice_sent_to_client_date
+invoice_status
+invoice_value
+invoice_proinde
+preliminary_report_date
+report_delivery_date
+consultant_id
+incident_id
+
+--- service_provider ---
+is_consultant
+id
+name
+friendly_name
+rate
+city
+complement
+country
+district
+location
+location_number
+postal_code
+state_or_region
+cnpj
+email
+mobile
+phone
+website

@@ -6,6 +6,7 @@ import CargoInformation from './CargoInformation'
 import DateInput from './DateInput'
 import ClaimDetails from './ClaimDetails'
 import CommentsTab from './CommentsTab'
+import AppointmentsTab from './AppointmentsTab'
 import AddMemberModal from './AddMemberModal'
 import Header from './Header'
 
@@ -25,6 +26,7 @@ export default function IncidentDetails() {
     const [hasCargo, setHasCargo] = useState(false)
     const [hasClaim, setHasClaim] = useState(false)
     const [hasComments, setHasComments] = useState(false)
+    const [hasAppointments, setHasAppointments] = useState(false)
     const [showMemberModal, setShowMemberModal] = useState(false)
     const [pendingMemberName, setPendingMemberName] = useState('')
     const [printUrl, setPrintUrl] = useState(null)
@@ -546,6 +548,19 @@ export default function IncidentDetails() {
                         <Plus className="h-4 w-4" /> Comments
                     </button>
                 )}
+                {!hasAppointments && (
+                    <button
+                        onClick={() => {
+                            if (!openTabs.includes('appointments')) {
+                                setOpenTabs([...openTabs, 'appointments'])
+                            }
+                            setActiveTab('appointments')
+                        }}
+                        className="bg-[#0078d4] text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 whitespace-nowrap"
+                    >
+                        <Plus className="h-4 w-4" /> Appointment
+                    </button>
+                )}
                 <button className="bg-[#0078d4] text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 whitespace-nowrap">
                     <Plus className="h-4 w-4" /> Invoices
                 </button>
@@ -581,7 +596,7 @@ export default function IncidentDetails() {
                 {/* Tabs */}
                 <div className="flex gap-1 flex-1">
                     {openTabs.sort((a, b) => {
-                        const order = ['details', 'cargo', 'claim', 'comments'];
+                        const order = ['details', 'cargo', 'claim', 'comments', 'appointments'];
                         return order.indexOf(a) - order.indexOf(b);
                     }).map(tab => (
                         <div key={tab} className="relative">
@@ -589,7 +604,7 @@ export default function IncidentDetails() {
                                 className={`px-4 py-2 text-sm font-medium rounded-t-md ${activeTab === tab ? 'bg-[#0078d4] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                 onClick={() => setActiveTab(tab)}
                             >
-                                {tab === 'details' ? 'Details' : tab === 'cargo' ? 'Cargo Information' : tab === 'claim' ? 'Claim Details' : tab === 'comments' ? 'Comments' : tab}
+                                {tab === 'details' ? 'Details' : tab === 'cargo' ? 'Cargo Information' : tab === 'claim' ? 'Claim Details' : tab === 'comments' ? 'Comments' : tab === 'appointments' ? 'Appointments' : tab}
                             </button>
                             {tab !== 'details' && (
                                 <button
@@ -901,6 +916,10 @@ export default function IncidentDetails() {
 
                 {activeTab === 'comments' && (
                     <CommentsTab incidentId={id} />
+                )}
+
+                {activeTab === 'appointments' && (
+                    <AppointmentsTab incidentId={id} />
                 )}
             </div>
 

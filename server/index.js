@@ -18,6 +18,7 @@ app.use('/api/options', optionsRoutes);
 app.use('/api/cargo', cargoRoutes);
 app.use('/api/claims', require('./routes/claims'));
 app.use('/api/comments', require('./routes/comments'));
+app.use('/api/appointments', require('./routes/appointments'));
 
 // Health Check
 app.get('/', (req, res) => {
