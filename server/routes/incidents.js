@@ -258,6 +258,89 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// GET incident for printing (with joined names)
+router.get('/:id/print', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const query = `
+            SELECT 
+                i.*,
+                dbo.get_reference_number(i.id) as formatted_reference,
+                s.name as ship_name,
+                p.name as place_name,
+                o.location as office_name,
+                c.name as club_name,
+                m.name as member_name,
+                ow.name as owner_name,
+                it.name as type_name,
+                r.name as reporter_name,
+                a.name as agent_name,
+                ch.name as handler_name
+            FROM incident i
+            LEFT JOIN ship s ON i.ship_id = s.id
+            LEFT JOIN port p ON i.place_id = p.id
+            LEFT JOIN office o ON i.local_office_id = o.id
+            LEFT JOIN club c ON i.club_id = c.id
+            LEFT JOIN member m ON i.member_id = m.id
+            LEFT JOIN member ow ON i.owner_id = ow.id
+            LEFT JOIN incident_type it ON i.type_id = it.id
+            LEFT JOIN reporter r ON i.reporter_id = r.id
+            LEFT JOIN agent a ON i.local_agent_id = a.id
+            LEFT JOIN claim_handler ch ON i.handler_id = ch.id
+            WHERE i.id = @id
+        `;
+
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .query(query);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Incident not found');
+        }
+
+        const incidentData = result.recordset[0];
+
+        // Fetch Cargo Information
+        const cargoResult = await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                SELECT ci.*, ct.name as cargo_type_name
+                FROM cargo_information ci
+                LEFT JOIN cargo_type ct ON ci.cargo_type_id = ct.id
+                WHERE ci.incident_id = @id
+            `);
+        incidentData.cargo = cargoResult.recordset;
+
+        // Fetch Claim Details
+        const claimResult = await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                SELECT cd.*, 
+                    lt.name as loss_type_name,
+                    lc.name as loss_cause_name,
+                    c.name as claimant_name
+                FROM claim_details cd
+                LEFT JOIN loss_type lt ON cd.loss_type_id = lt.id
+                LEFT JOIN loss_cause lc ON cd.loss_cause_id = lc.id
+                LEFT JOIN claimant c ON cd.surrogate_claimant_id = c.id
+                WHERE cd.incident_id = @id
+            `);
+        incidentData.claims = claimResult.recordset;
+
+        // Fetch Comments
+        const commentsResult = await pool.request()
+            .input('id', sql.Int, id)
+            .query('SELECT * FROM comment WHERE incident_id = @id ORDER BY created_date DESC');
+        incidentData.comments = commentsResult.recordset;
+
+        res.json(incidentData);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 // POST create new incident
 router.post('/', async (req, res) => {
     try {
@@ -404,6 +487,7 @@ router.put('/:id', async (req, res) => {
             .input('time_bar_date', sql.Date, time_bar_date || null)
             .input('latest_report_date', sql.Date, latest_report_date || null)
             .input('next_review_date', sql.Date, next_review_date || null)
+            .input('last_modified_date', sql.BigInt, Date.now())
             .query(`
                 UPDATE incident
                 SET 
@@ -429,7 +513,7 @@ router.put('/:id', async (req, res) => {
                     time_bar_date = @time_bar_date,
                     latest_report_date = @latest_report_date,
                     next_review_date = @next_review_date,
-                    last_modified_date = GETDATE()
+                    last_modified_date = @last_modified_date
                 WHERE id = @id
             `);
 

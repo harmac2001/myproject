@@ -27,6 +27,7 @@ export default function IncidentDetails() {
     const [hasComments, setHasComments] = useState(false)
     const [showMemberModal, setShowMemberModal] = useState(false)
     const [pendingMemberName, setPendingMemberName] = useState('')
+    const [printUrl, setPrintUrl] = useState(null)
 
     // Options
     const [ships, setShips] = useState([])
@@ -479,6 +480,11 @@ export default function IncidentDetails() {
         })
     }
 
+    const handlePrint = () => {
+        // Append timestamp to force reload if printing same incident again
+        setPrintUrl(`/incident/${id}/print?t=${Date.now()}`)
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -490,6 +496,15 @@ export default function IncidentDetails() {
     return (
         <div className="min-h-screen bg-white">
             <Header />
+
+            {/* Hidden iframe for printing */}
+            {printUrl && (
+                <iframe
+                    src={printUrl}
+                    style={{ position: 'absolute', width: 0, height: 0, border: 0, visibility: 'hidden' }}
+                    title="print-frame"
+                />
+            )}
             {/* Top Navigation Bar */}
             <div className="bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-2 overflow-x-auto">
                 {!hasCargo && (
@@ -542,7 +557,10 @@ export default function IncidentDetails() {
                     <Plus className="h-4 w-4" /> Sub Incident
                 </button>
                 <div className="flex-1"></div>
-                <button className="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 hover:bg-slate-50">
+                <button
+                    onClick={handlePrint}
+                    className="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 hover:bg-slate-50"
+                >
                     <Printer className="h-4 w-4" /> Print
                 </button>
                 <button
@@ -893,6 +911,6 @@ export default function IncidentDetails() {
                 onSave={handleMemberSaved}
                 initialName={pendingMemberName}
             />
-        </div >
+        </div>
     )
 }
