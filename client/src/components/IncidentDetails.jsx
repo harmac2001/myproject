@@ -10,6 +10,10 @@ import AppointmentsTab from './AppointmentsTab'
 import AddMemberModal from './AddMemberModal'
 import EditVesselModal from './EditVesselModal'
 import ReassignVesselModal from './ReassignVesselModal'
+import EditMemberModal from './EditMemberModal'
+import EditAgentModal from './EditAgentModal'
+import ReassignMemberModal from './ReassignMemberModal'
+import ReassignAgentModal from './ReassignAgentModal'
 import Header from './Header'
 
 export default function IncidentDetails() {
@@ -37,6 +41,21 @@ export default function IncidentDetails() {
     const [showReassignVesselModal, setShowReassignVesselModal] = useState(false)
     const [deletingVesselId, setDeletingVesselId] = useState(null)
     const [deletingVesselName, setDeletingVesselName] = useState('')
+
+    // Member modals (used for both Members and Managers)
+    const [showEditMemberModal, setShowEditMemberModal] = useState(false)
+    const [editingMemberId, setEditingMemberId] = useState(null)
+    const [showReassignMemberModal, setShowReassignMemberModal] = useState(false)
+    const [deletingMemberId, setDeletingMemberId] = useState(null)
+    const [deletingMemberName, setDeletingMemberName] = useState('')
+    const [isManager, setIsManager] = useState(false) // Track if we're deleting a manager
+
+    // Agent modals
+    const [showEditAgentModal, setShowEditAgentModal] = useState(false)
+    const [editingAgentId, setEditingAgentId] = useState(null)
+    const [showReassignAgentModal, setShowReassignAgentModal] = useState(false)
+    const [deletingAgentId, setDeletingAgentId] = useState(null)
+    const [deletingAgentName, setDeletingAgentName] = useState('')
 
     // Options
     const [ships, setShips] = useState([])
@@ -447,6 +466,120 @@ export default function IncidentDetails() {
         }
     }
 
+    // Member Handlers (used for both Member and Manager fields)
+    const handleEditMember = (memberId) => {
+        setEditingMemberId(memberId)
+        setShowEditMemberModal(true)
+    }
+
+    const handleDeleteMember = async (memberId, isManagerDeletion = false) => {
+        setIsManager(isManagerDeletion)
+        try {
+            // Check if member is used in any incidents
+            const checkResponse = await fetch(`http://localhost:5000/api/options/members/${memberId}/incidents`)
+            const incidents = await checkResponse.json()
+
+            if (incidents.length > 0) {
+                // Member is in use, show reassignment modal
+                const member = members.find(m => m.id === memberId)
+                setDeletingMemberId(memberId)
+                setDeletingMemberName(member?.name || 'Unknown')
+                setShowReassignMemberModal(true)
+            } else {
+                // Member is not in use, delete directly
+                await performMemberDeletion(memberId)
+            }
+        } catch (err) {
+            console.error('Error checking member usage:', err)
+            alert('Error checking member usage: ' + err.message)
+        }
+    }
+
+    const performMemberDeletion = async (memberId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/options/members/${memberId}`, {
+                method: 'DELETE'
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                alert(errorData.message || 'Error deleting member')
+                return
+            }
+
+            // Refresh members list
+            const membersResponse = await fetch('http://localhost:5000/api/options/members')
+            const membersData = await membersResponse.json()
+            setMembers(membersData)
+
+            // Clear selection if this member was selected
+            if (formData.member_id === memberId) {
+                setFormData(prev => ({ ...prev, member_id: '' }))
+            }
+            if (formData.owner_id === memberId) {
+                setFormData(prev => ({ ...prev, owner_id: '' }))
+            }
+        } catch (err) {
+            console.error('Error deleting member:', err)
+            alert('Error deleting member: ' + err.message)
+        }
+    }
+
+    // Agent Handlers
+    const handleEditAgent = (agentId) => {
+        setEditingAgentId(agentId)
+        setShowEditAgentModal(true)
+    }
+
+    const handleDeleteAgent = async (agentId) => {
+        try {
+            // Check if agent is used in any incidents
+            const checkResponse = await fetch(`http://localhost:5000/api/options/agents/${agentId}/incidents`)
+            const incidents = await checkResponse.json()
+
+            if (incidents.length > 0) {
+                // Agent is in use, show reassignment modal
+                const agent = agents.find(a => a.id === agentId)
+                setDeletingAgentId(agentId)
+                setDeletingAgentName(agent?.name || 'Unknown')
+                setShowReassignAgentModal(true)
+            } else {
+                // Agent is not in use, delete directly
+                await performAgentDeletion(agentId)
+            }
+        } catch (err) {
+            console.error('Error checking agent usage:', err)
+            alert('Error checking agent usage: ' + err.message)
+        }
+    }
+
+    const performAgentDeletion = async (agentId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/options/agents/${agentId}`, {
+                method: 'DELETE'
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                alert(errorData.message || 'Error deleting agent')
+                return
+            }
+
+            // Refresh agents list
+            const agentsResponse = await fetch('http://localhost:5000/api/options/agents')
+            const agentsData = await agentsResponse.json()
+            setAgents(agentsData)
+
+            // Clear selection if this agent was selected
+            if (formData.local_agent_id === agentId) {
+                setFormData(prev => ({ ...prev, local_agent_id: '' }))
+            }
+        } catch (err) {
+            console.error('Error deleting agent:', err)
+            alert('Error deleting agent: ' + err.message)
+        }
+    }
+
     const handleVesselSaved = async () => {
         // Refresh ships list
         const response = await fetch('http://localhost:5000/api/options/ships')
@@ -826,6 +959,8 @@ export default function IncidentDetails() {
                                     disabled={!isEditing}
                                     allowCreate={isEditing}
                                     onCreateNew={handleCreateMember}
+                                    onEdit={handleEditMember}
+                                    onDelete={handleDeleteMember}
                                 />
                             </div>
                             <div className="col-span-6">
@@ -837,6 +972,8 @@ export default function IncidentDetails() {
                                     placeholder="Select Manager..."
                                     className="w-full"
                                     disabled={!isEditing}
+                                    onEdit={handleEditMember}
+                                    onDelete={(id) => handleDeleteMember(id, true)}
                                 />
                             </div>
 
@@ -883,6 +1020,8 @@ export default function IncidentDetails() {
                                     placeholder="Select Agent..."
                                     className="w-full"
                                     disabled={!isEditing}
+                                    onEdit={handleEditAgent}
+                                    onDelete={handleDeleteAgent}
                                 />
                             </div>
                             <div className="col-span-2">
@@ -1016,6 +1155,49 @@ export default function IncidentDetails() {
                 vesselName={deletingVesselName}
                 ships={ships}
                 onReassignAndDelete={performVesselDeletion}
+            />
+
+            <EditMemberModal
+                isOpen={showEditMemberModal}
+                onClose={() => setShowEditMemberModal(false)}
+                memberId={editingMemberId}
+                onSaved={() => {
+                    // Refresh members list
+                    fetch('http://localhost:5000/api/options/members')
+                        .then(res => res.json())
+                        .then(data => setMembers(data))
+                }}
+            />
+
+            <ReassignMemberModal
+                isOpen={showReassignMemberModal}
+                onClose={() => setShowReassignMemberModal(false)}
+                memberId={deletingMemberId}
+                memberName={deletingMemberName}
+                members={members}
+                onReassignAndDelete={performMemberDeletion}
+                isManger={isManager}
+            />
+
+            <EditAgentModal
+                isOpen={showEditAgentModal}
+                onClose={() => setShowEditAgentModal(false)}
+                agentId={editingAgentId}
+                onSaved={() => {
+                    // Refresh agents list
+                    fetch('http://localhost:5000/api/options/agents')
+                        .then(res => res.json())
+                        .then(data => setAgents(data))
+                }}
+            />
+
+            <ReassignAgentModal
+                isOpen={showReassignAgentModal}
+                onClose={() => setShowReassignAgentModal(false)}
+                agentId={deletingAgentId}
+                agentName={deletingAgentName}
+                agents={agents}
+                onReassignAndDelete={performAgentDeletion}
             />
         </div>
     )

@@ -153,6 +153,39 @@ router.post('/members', async (req, res) => {
     }
 });
 
+// GET incidents using a specific member (for reassignment)
+router.get('/members/:id/incidents', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query(`
+                SELECT 
+                    i.id,
+                    dbo.get_reference_number(i.id) as reference_number,
+                    i.description,
+                    'member' as used_as
+                FROM incident i
+                WHERE i.member_id = @id
+                UNION
+                SELECT 
+                    i.id,
+                    dbo.get_reference_number(i.id) as reference_number,
+                    i.description,
+                    'manager' as used_as
+                FROM incident i
+                WHERE i.owner_id = @id
+                ORDER BY reference_number DESC
+            `);
+
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 // Get clubs
 router.get('/clubs', async (req, res) => {
     try {
@@ -213,6 +246,30 @@ router.get('/agents', async (req, res) => {
     try {
         const pool = await poolPromise;
         const result = await pool.request().query('SELECT id, name FROM agent ORDER BY name');
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// GET incidents using a specific agent (for reassignment)
+router.get('/agents/:id/incidents', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query(`
+                SELECT 
+                    i.id,
+                    dbo.get_reference_number(i.id) as reference_number,
+                    i.description
+                FROM incident i
+                WHERE i.local_agent_id = @id
+                ORDER BY reference_number DESC
+            `);
+
         res.json(result.recordset);
     } catch (err) {
         res.status(500).send(err.message);

@@ -565,6 +565,132 @@ router.patch('/:id/reassign-vessel', async (req, res) => {
     }
 });
 
+// PATCH update member for incident (for member reassignment)
+router.patch('/:id/reassign-member', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newMemberId } = req.body;
+        const pool = await poolPromise;
+
+        console.log(`[PATCH /reassign-member] Incident ID: ${id}, New Member ID: ${newMemberId}`);
+
+        if (!newMemberId) {
+            console.error('[PATCH /reassign-member] Error: New member ID is required');
+            return res.status(400).send('New member ID is required');
+        }
+
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .input('member_id', sql.Int, newMemberId)
+            .input('last_modified_date', sql.BigInt, Date.now())
+            .query(`
+                UPDATE incident
+                SET 
+                    member_id = @member_id,
+                    last_modified_date = @last_modified_date
+                WHERE id = @id
+            `);
+
+        console.log(`[PATCH /reassign-member] Rows affected: ${result.rowsAffected[0]}`);
+
+        if (result.rowsAffected[0] === 0) {
+            console.error(`[PATCH /reassign-member] Incident ${id} not found`);
+            return res.status(404).send('Incident not found');
+        }
+
+        console.log(`[PATCH /reassign-member] Successfully reassigned incident ${id} to member ${newMemberId}`);
+        res.json({ message: 'Member reassigned successfully' });
+    } catch (err) {
+        console.error('[PATCH /reassign-member] Error:', err.message);
+        console.error('[PATCH /reassign-member] Stack:', err.stack);
+        res.status(500).send(err.message);
+    }
+});
+
+// PATCH update manager for incident (for manager reassignment)
+router.patch('/:id/reassign-manager', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newManagerId } = req.body;
+        const pool = await poolPromise;
+
+        console.log(`[PATCH /reassign-manager] Incident ID: ${id}, New Manager ID: ${newManagerId}`);
+
+        if (!newManagerId) {
+            console.error('[PATCH /reassign-manager] Error: New manager ID is required');
+            return res.status(400).send('New manager ID is required');
+        }
+
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .input('owner_id', sql.Int, newManagerId)
+            .input('last_modified_date', sql.BigInt, Date.now())
+            .query(`
+                UPDATE incident
+                SET 
+                    owner_id = @owner_id,
+                    last_modified_date = @last_modified_date
+                WHERE id = @id
+            `);
+
+        console.log(`[PATCH /reassign-manager] Rows affected: ${result.rowsAffected[0]}`);
+
+        if (result.rowsAffected[0] === 0) {
+            console.error(`[PATCH /reassign-manager] Incident ${id} not found`);
+            return res.status(404).send('Incident not found');
+        }
+
+        console.log(`[PATCH /reassign-manager] Successfully reassigned incident ${id} to manager ${newManagerId}`);
+        res.json({ message: 'Manager reassigned successfully' });
+    } catch (err) {
+        console.error('[PATCH /reassign-manager] Error:', err.message);
+        console.error('[PATCH /reassign-manager] Stack:', err.stack);
+        res.status(500).send(err.message);
+    }
+});
+
+// PATCH update agent for incident (for agent reassignment)
+router.patch('/:id/reassign-agent', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newAgentId } = req.body;
+        const pool = await poolPromise;
+
+        console.log(`[PATCH /reassign-agent] Incident ID: ${id}, New Agent ID: ${newAgentId}`);
+
+        if (!newAgentId) {
+            console.error('[PATCH /reassign-agent] Error: New agent ID is required');
+            return res.status(400).send('New agent ID is required');
+        }
+
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .input('local_agent_id', sql.Int, newAgentId)
+            .input('last_modified_date', sql.BigInt, Date.now())
+            .query(`
+                UPDATE incident
+                SET 
+                    local_agent_id = @local_agent_id,
+                    last_modified_date = @last_modified_date
+                WHERE id = @id
+            `);
+
+        console.log(`[PATCH /reassign-agent] Rows affected: ${result.rowsAffected[0]}`);
+
+        if (result.rowsAffected[0] === 0) {
+            console.error(`[PATCH /reassign-agent] Incident ${id} not found`);
+            return res.status(404).send('Incident not found');
+        }
+
+        console.log(`[PATCH /reassign-agent] Successfully reassigned incident ${id} to agent ${newAgentId}`);
+        res.json({ message: 'Agent reassigned successfully' });
+    } catch (err) {
+        console.error('[PATCH /reassign-agent] Error:', err.message);
+        console.error('[PATCH /reassign-agent] Stack:', err.stack);
+        res.status(500).send(err.message);
+    }
+});
+
 // POST create sub-incident
 router.post('/:id/subincident', async (req, res) => {
     try {
