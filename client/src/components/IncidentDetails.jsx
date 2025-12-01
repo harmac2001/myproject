@@ -8,6 +8,8 @@ import ClaimDetails from './ClaimDetails'
 import CommentsTab from './CommentsTab'
 import AppointmentsTab from './AppointmentsTab'
 import AddMemberModal from './AddMemberModal'
+import EditVesselModal from './EditVesselModal'
+import ReassignVesselModal from './ReassignVesselModal'
 import Header from './Header'
 
 export default function IncidentDetails() {
@@ -30,6 +32,11 @@ export default function IncidentDetails() {
     const [showMemberModal, setShowMemberModal] = useState(false)
     const [pendingMemberName, setPendingMemberName] = useState('')
     const [printUrl, setPrintUrl] = useState(null)
+    const [showEditVesselModal, setShowEditVesselModal] = useState(false)
+    const [editingVesselId, setEditingVesselId] = useState(null)
+    const [showReassignVesselModal, setShowReassignVesselModal] = useState(false)
+    const [deletingVesselId, setDeletingVesselId] = useState(null)
+    const [deletingVesselName, setDeletingVesselName] = useState('')
 
     // Options
     const [ships, setShips] = useState([])
@@ -386,6 +393,68 @@ export default function IncidentDetails() {
         setShowMemberModal(false)
     }
 
+    const handleEditVessel = (vesselId) => {
+        setEditingVesselId(vesselId)
+        setShowEditVesselModal(true)
+    }
+
+    const handleDeleteVessel = async (vesselId) => {
+        try {
+            // Check if vessel is used in any incidents
+            const checkResponse = await fetch(`http://localhost:5000/api/options/ships/${vesselId}/incidents`)
+            const incidents = await checkResponse.json()
+
+            if (incidents.length > 0) {
+                // Vessel is in use, show reassignment modal
+                const vessel = ships.find(s => s.id === vesselId)
+                setDeletingVesselId(vesselId)
+                setDeletingVesselName(vessel?.name || 'Unknown')
+                setShowReassignVesselModal(true)
+            } else {
+                // Vessel is not in use, delete directly
+                await performVesselDeletion(vesselId)
+            }
+        } catch (err) {
+            console.error('Error checking vessel usage:', err)
+            alert('Error checking vessel usage: ' + err.message)
+        }
+    }
+
+    const performVesselDeletion = async (vesselId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/options/ships/${vesselId}`, {
+                method: 'DELETE'
+            })
+
+            if (!response.ok) {
+                const errorData = await response.json()
+                alert(errorData.message || 'Error deleting vessel')
+                return
+            }
+
+            // Refresh ships list
+            const shipsResponse = await fetch('http://localhost:5000/api/options/ships')
+            const shipsData = await shipsResponse.json()
+            setShips(shipsData)
+
+            // Clear selection if this vessel was selected
+            if (formData.ship_id === vesselId) {
+                setFormData({ ...formData, ship_id: '' })
+            }
+        } catch (err) {
+            console.error('Error deleting vessel:', err)
+            alert('Error deleting vessel: ' + err.message)
+        }
+    }
+
+    const handleVesselSaved = async () => {
+        // Refresh ships list
+        const response = await fetch('http://localhost:5000/api/options/ships')
+        const data = await response.json()
+        setShips(data)
+        setShowEditVesselModal(false)
+    }
+
     const handleCloseTab = async (tabToClose) => {
         if (tabToClose === 'cargo') {
             if (window.confirm("Closing this tab will permanently delete all cargo information associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
@@ -676,6 +745,8 @@ export default function IncidentDetails() {
                                     disabled={!isEditing}
                                     allowCreate={isEditing}
                                     onCreateNew={handleCreateShip}
+                                    onEdit={handleEditVessel}
+                                    onDelete={handleDeleteVessel}
                                 />
                             </div>
                             <div className="col-span-2">
@@ -929,6 +1000,22 @@ export default function IncidentDetails() {
                 onClose={() => setShowMemberModal(false)}
                 onSave={handleMemberSaved}
                 initialName={pendingMemberName}
+            />
+
+            <EditVesselModal
+                isOpen={showEditVesselModal}
+                onClose={() => setShowEditVesselModal(false)}
+                vesselId={editingVesselId}
+                onSaved={handleVesselSaved}
+            />
+
+            <ReassignVesselModal
+                isOpen={showReassignVesselModal}
+                onClose={() => setShowReassignVesselModal(false)}
+                vesselId={deletingVesselId}
+                vesselName={deletingVesselName}
+                ships={ships}
+                onReassignAndDelete={performVesselDeletion}
             />
         </div>
     )

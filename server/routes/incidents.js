@@ -523,6 +523,48 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// PATCH update vessel for incident (for vessel reassignment)
+router.patch('/:id/reassign-vessel', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newVesselId } = req.body;
+        const pool = await poolPromise;
+
+        console.log(`[PATCH /reassign-vessel] Incident ID: ${id}, New Vessel ID: ${newVesselId}`);
+
+        if (!newVesselId) {
+            console.error('[PATCH /reassign-vessel] Error: New vessel ID is required');
+            return res.status(400).send('New vessel ID is required');
+        }
+
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .input('ship_id', sql.Int, newVesselId)
+            .input('last_modified_date', sql.BigInt, Date.now())
+            .query(`
+                UPDATE incident
+                SET 
+                    ship_id = @ship_id,
+                    last_modified_date = @last_modified_date
+                WHERE id = @id
+            `);
+
+        console.log(`[PATCH /reassign-vessel] Rows affected: ${result.rowsAffected[0]}`);
+
+        if (result.rowsAffected[0] === 0) {
+            console.error(`[PATCH /reassign-vessel] Incident ${id} not found`);
+            return res.status(404).send('Incident not found');
+        }
+
+        console.log(`[PATCH /reassign-vessel] Successfully reassigned incident ${id} to vessel ${newVesselId}`);
+        res.json({ message: 'Vessel reassigned successfully' });
+    } catch (err) {
+        console.error('[PATCH /reassign-vessel] Error:', err.message);
+        console.error('[PATCH /reassign-vessel] Stack:', err.stack);
+        res.status(500).send(err.message);
+    }
+});
+
 // POST create sub-incident
 router.post('/:id/subincident', async (req, res) => {
     try {

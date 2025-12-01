@@ -1,7 +1,7 @@
-import { Search, ChevronDown, Plus } from 'lucide-react'
+import { Search, ChevronDown, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
-const SearchableSelect = ({ options, value, onChange, placeholder, className, disabled, labelKey, searchable = true, allowCreate = false, onCreateNew }) => {
+const SearchableSelect = ({ options, value, onChange, placeholder, className, disabled, labelKey, searchable = true, allowCreate = false, onCreateNew, onEdit, onDelete }) => {
     const [isOpen, setIsOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const wrapperRef = useRef(null)
@@ -41,10 +41,38 @@ const SearchableSelect = ({ options, value, onChange, placeholder, className, di
         return (
             <div className={`relative ${className}`}>
                 <div className="input-field w-full flex items-center justify-between bg-white py-2.5 px-3 text-slate-900 cursor-default border border-slate-300 rounded-md">
-                    <span className="block truncate">
+                    <span className="block truncate flex-1">
                         {displayValue || placeholder}
                     </span>
-                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                    <div className="flex items-center gap-2">
+                        {value && onEdit && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEdit(value)
+                                }}
+                                className="text-slate-400 hover:text-blue-600 transition-colors"
+                                title="Edit"
+                            >
+                                <Edit2 className="h-4 w-4" />
+                            </button>
+                        )}
+                        {value && onDelete && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onDelete(value)
+                                }}
+                                className="text-slate-400 hover:text-red-600 transition-colors"
+                                title="Delete"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </button>
+                        )}
+                        <ChevronDown className="h-4 w-4 text-slate-400" />
+                    </div>
                 </div>
             </div>
         )
@@ -56,10 +84,38 @@ const SearchableSelect = ({ options, value, onChange, placeholder, className, di
                 className={`input-field w-full flex items-center justify-between bg-white py-2.5 px-3 border border-slate-300 rounded-md ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
-                <span className={`block truncate ${!displayValue ? 'text-slate-500' : 'text-slate-900'}`}>
+                <span className={`block truncate flex-1 ${!displayValue ? 'text-slate-500' : 'text-slate-900'}`}>
                     {displayValue || placeholder}
                 </span>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
+                <div className="flex items-center gap-2">
+                    {value && onEdit && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onEdit(value)
+                            }}
+                            className="text-slate-400 hover:text-blue-600 transition-colors"
+                            title="Edit"
+                        >
+                            <Edit2 className="h-4 w-4" />
+                        </button>
+                    )}
+                    {value && onDelete && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onDelete(value)
+                            }}
+                            className="text-slate-400 hover:text-red-600 transition-colors"
+                            title="Delete"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </button>
+                    )}
+                    <ChevronDown className="h-4 w-4 text-slate-400" />
+                </div>
             </div>
 
             {isOpen && (

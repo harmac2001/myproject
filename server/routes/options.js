@@ -32,6 +32,88 @@ router.post('/ships', async (req, res) => {
     }
 });
 
+// PUT update ship
+router.put('/ships/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Ship name is required');
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .query('UPDATE ship SET name = @name OUTPUT INSERTED.id, INSERTED.name WHERE id = @id');
+
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Ship not found');
+        }
+
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE ship
+router.delete('/ships/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // Check if ship is used in any incidents
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM incident WHERE ship_id = @id');
+
+        if (checkResult.recordset[0].count > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete ship',
+                message: `This vessel is used in ${checkResult.recordset[0].count} incident(s). Please reassign those incidents before deleting.`
+            });
+        }
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('DELETE FROM ship WHERE id = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Ship not found');
+        }
+
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// GET incidents using a specific ship (for reassignment)
+router.get('/ships/:id/incidents', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query(`
+                SELECT 
+                    i.id,
+                    dbo.get_reference_number(i.id) as reference_number,
+                    i.description
+                FROM incident i
+                WHERE i.ship_id = @id
+                ORDER BY i.reference_number DESC
+            `);
+
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 // GET all members
 router.get('/members', async (req, res) => {
     try {
