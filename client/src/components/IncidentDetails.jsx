@@ -14,6 +14,7 @@ import EditMemberModal from './EditMemberModal'
 import EditAgentModal from './EditAgentModal'
 import ReassignMemberModal from './ReassignMemberModal'
 import ReassignAgentModal from './ReassignAgentModal'
+import ExpensesTab from './ExpensesTab'
 import Header from './Header'
 
 export default function IncidentDetails() {
@@ -28,7 +29,7 @@ export default function IncidentDetails() {
     const [saving, setSaving] = useState(false)
     const [formattedReference, setFormattedReference] = useState('')
     const [activeTab, setActiveTab] = useState('details')
-    const [openTabs, setOpenTabs] = useState(['details'])
+    const [openTabs, setOpenTabs] = useState(['details', 'expenses'])
     const [hasCargo, setHasCargo] = useState(false)
     const [hasClaim, setHasClaim] = useState(false)
     const [hasComments, setHasComments] = useState(false)
@@ -819,8 +820,8 @@ export default function IncidentDetails() {
 
                 {/* Tabs */}
                 <div className="flex gap-1 flex-1">
-                    {openTabs.sort((a, b) => {
-                        const order = ['details', 'cargo', 'claim', 'comments', 'appointments'];
+                    {openTabs.filter(tab => tab !== 'expenses' || !isNew).sort((a, b) => {
+                        const order = ['details', 'expenses', 'cargo', 'claim', 'comments', 'appointments'];
                         return order.indexOf(a) - order.indexOf(b);
                     }).map(tab => (
                         <div key={tab} className="relative">
@@ -828,9 +829,9 @@ export default function IncidentDetails() {
                                 className={`px-4 py-2 text-sm font-medium rounded-t-md ${activeTab === tab ? 'bg-[#0078d4] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                 onClick={() => setActiveTab(tab)}
                             >
-                                {tab === 'details' ? 'Details' : tab === 'cargo' ? 'Cargo Information' : tab === 'claim' ? 'Claim Details' : tab === 'comments' ? 'Comments' : tab === 'appointments' ? 'Appointments' : tab}
+                                {tab === 'details' ? 'Details' : tab === 'expenses' ? 'Expenses' : tab === 'cargo' ? 'Cargo Information' : tab === 'claim' ? 'Claim Details' : tab === 'comments' ? 'Comments' : tab === 'appointments' ? 'Appointments' : tab}
                             </button>
-                            {tab !== 'details' && (
+                            {tab !== 'details' && tab !== 'expenses' && (
                                 <button
                                     onClick={() => handleCloseTab(tab)}
                                     className={`absolute -right-1 -top-1 rounded-full p-0.5 ${activeTab === tab ? 'bg-white text-[#0078d4]' : 'bg-slate-300 text-slate-600'} hover:bg-red-500 hover:text-white`}
@@ -1152,6 +1153,10 @@ export default function IncidentDetails() {
 
                 {activeTab === 'appointments' && (
                     <AppointmentsTab incidentId={id} />
+                )}
+
+                {activeTab === 'expenses' && (
+                    <ExpensesTab incidentId={id} />
                 )}
             </div>
 
