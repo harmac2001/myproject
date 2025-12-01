@@ -153,6 +153,82 @@ router.post('/members', async (req, res) => {
     }
 });
 
+// PUT update member
+router.put('/members/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, line1, line2, line3, line4, vat_number } = req.body;
+
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Member name is required');
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .input('line1', sql.NVarChar, line1 || null)
+            .input('line2', sql.NVarChar, line2 || null)
+            .input('line3', sql.NVarChar, line3 || null)
+            .input('line4', sql.NVarChar, line4 || null)
+            .input('vat_number', sql.NVarChar, vat_number || null)
+            .query(`
+                UPDATE member 
+                SET 
+                    name = @name,
+                    line1 = @line1,
+                    line2 = @line2,
+                    line3 = @line3,
+                    line4 = @line4,
+                    vat_number = @vat_number
+                WHERE id = @id
+            `);
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Member not found');
+        }
+
+        res.json({ id, name, line1, line2, line3, line4, vat_number });
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE member
+router.delete('/members/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // Check if member is used in any incidents (as member or manager)
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query(`
+                SELECT COUNT(*) as count FROM incident 
+                WHERE member_id = @id OR owner_id = @id
+            `);
+
+        if (checkResult.recordset[0].count > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete member',
+                message: `This member is used in ${checkResult.recordset[0].count} incident(s). Please reassign those incidents before deleting.`
+            });
+        }
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('DELETE FROM member WHERE id = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Member not found');
+        }
+
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 // GET incidents using a specific member (for reassignment)
 router.get('/members/:id/incidents', async (req, res) => {
     try {
@@ -271,6 +347,68 @@ router.get('/agents/:id/incidents', async (req, res) => {
             `);
 
         res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT update agent
+router.put('/agents/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Agent name is required');
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .query(`
+                UPDATE agent 
+                SET name = @name
+                WHERE id = @id
+            `);
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Agent not found');
+        }
+
+        res.json({ id, name });
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE agent
+router.delete('/agents/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // Check if agent is used in any incidents
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM incident WHERE local_agent_id = @id');
+
+        if (checkResult.recordset[0].count > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete agent',
+                message: `This agent is used in ${checkResult.recordset[0].count} incident(s). Please reassign those incidents before deleting.`
+            });
+        }
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('DELETE FROM agent WHERE id = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Agent not found');
+        }
+
+        res.status(204).send();
     } catch (err) {
         res.status(500).send(err.message);
     }

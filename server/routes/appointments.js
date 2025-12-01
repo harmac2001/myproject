@@ -134,4 +134,21 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// DELETE all appointments for an incident
+router.delete('/incident/:incidentId', async (req, res) => {
+    try {
+        const { incidentId } = req.params;
+        const pool = await poolPromise;
+
+        await pool.request()
+            .input('incident_id', sql.BigInt, incidentId)
+            .query('DELETE FROM appointment WHERE incident_id = @incident_id');
+
+        res.json({ message: 'All appointments for incident deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting appointments:', err);
+        res.status(500).send(err.message);
+    }
+});
+
 module.exports = router;

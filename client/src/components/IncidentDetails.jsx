@@ -658,6 +658,28 @@ export default function IncidentDetails() {
                     alert('Error deleting comments')
                 }
             }
+        } else if (tabToClose === 'appointments') {
+            if (window.confirm("Closing this tab will permanently delete all appointments associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/appointments/incident/${id}`, {
+                        method: 'DELETE'
+                    })
+
+                    if (response.ok) {
+                        setHasAppointments(false)
+                        const newTabs = openTabs.filter(t => t !== tabToClose)
+                        setOpenTabs(newTabs)
+                        if (activeTab === tabToClose) {
+                            setActiveTab('details')
+                        }
+                    } else {
+                        alert('Error deleting appointments')
+                    }
+                } catch (err) {
+                    console.error('Error deleting appointments:', err)
+                    alert('Error deleting appointments')
+                }
+            }
         } else {
             const newTabs = openTabs.filter(t => t !== tabToClose)
             setOpenTabs(newTabs)
