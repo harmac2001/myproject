@@ -9,7 +9,6 @@ const config = {
     options: {
         encrypt: true, // Set to true if using Azure
         trustServerCertificate: true, // Set to true for local dev
-        enableArithAbort: true,
         connectTimeout: 30000
     }
 };
