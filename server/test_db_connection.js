@@ -7,24 +7,35 @@ const config = {
     server: process.env.DB_SERVER,
     database: process.env.DB_NAME,
     options: {
-        encrypt: true, // Changed to true
+        encrypt: false,
         trustServerCertificate: true,
         enableArithAbort: true,
-        connectTimeout: 15000 // Add timeout
+        connectTimeout: 30000 // 30 seconds
     }
 };
 
-async function checkConnection() {
-    console.log('Testing connection to:', config.server);
+console.log('Attempting to connect to database...');
+console.log(`Server: ${config.server}`);
+console.log(`Database: ${config.database}`);
+console.log(`User: ${config.user}`);
+
+async function testConnection() {
     try {
         const pool = await new sql.ConnectionPool(config).connect();
-        console.log('Connected successfully!');
+        console.log('Successfully connected to SQL Server!');
+
         const result = await pool.request().query('SELECT @@VERSION as version');
-        console.log('Version:', result.recordset[0].version);
-        pool.close();
+        console.log('SQL Server Version:', result.recordset[0].version);
+
+        await pool.close();
+        process.exit(0);
     } catch (err) {
-        console.error('Connection Failed:', err);
+        console.error('Connection Failed!');
+        console.error('Error Code:', err.code);
+        console.error('Error Message:', err.message);
+        console.error('Full Error:', err);
+        process.exit(1);
     }
 }
 
-checkConnection();
+testConnection();

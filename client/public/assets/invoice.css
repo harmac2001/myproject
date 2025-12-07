@@ -1,0 +1,527 @@
+@charset "UTF-8";
+
+body {
+    margin-top: 0px;
+    font-size: 10pt;
+    margin-left: 0px;
+    color: black;
+    margin-right: 0px;
+    font-family: "Segoe UI", arial, helvetica, sans-serif;
+}
+
+td {
+    margin-top: 0px;
+    font-size: 10pt;
+    margin-left: 0px;
+    color: black;
+    margin-right: 0px;
+
+
+}
+
+table {
+    font-size: 10pt;
+
+}
+
+.subheading {
+    font-size: 12pt;
+    color: olive;
+}
+
+.appname {
+    font-weight: bold;
+    font-size: 24pt;
+    color: #dd0206;
+
+}
+
+.sysinfo {
+    font-size: 10pt;
+    color: #000000;
+
+}
+
+.title {
+    font-size: 20pt;
+    color: #e6e6e6;
+
+}
+
+.abort {
+    padding-left: 10px;
+    color: #c00000;
+}
+
+.important {
+    color: #ff0000;
+
+}
+
+.error {
+    color: #ff0000;
+
+}
+
+div.error {
+    color: red;
+
+}
+
+.info {
+    font-weight: bold;
+    font-size: 10pt;
+    color: green;
+
+}
+
+.note {
+    font-size: 7pt;
+    color: #666666;
+
+}
+
+.help {
+    font-size: 10pt;
+    color: #333333;
+
+}
+
+.reqfld {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #666666;
+
+}
+
+li {
+    margin-top: 3px;
+    list-style-position: outside;
+    margin-bottom: 3px;
+    vertical-align: middle;
+    list-style-type: square;
+}
+
+h1 {
+    font-weight: normal;
+    font-size: 14pt;
+    color: #000000;
+    line-height: 14pt;
+
+}
+
+h2 {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #ff0000;
+    line-height: 10pt;
+
+}
+
+h4 {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #ff0000;
+    line-height: 10pt;
+
+}
+
+input {
+    font-size: 10pt;
+}
+
+select {
+    font-size: 10pt;
+}
+
+input.button {
+    font-size: 10pt;
+    cursor: hand;
+}
+
+a {
+    background-color: transparent;
+}
+
+td.heading {
+    border-right: #99ccff 1px outset;
+    border-top: #99ccff 1px outset;
+    font-size: 10pt;
+    border-left: #99ccff 1px outset;
+    color: #ffffff;
+    border-bottom: #99ccff 1px outset;
+
+    height: 22px;
+    background-color: #6699cc;
+    text-align: center;
+}
+
+td.headingsorted {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #ffffff;
+
+    height: 22px;
+    background-color: #c0c0c0;
+    text-align: center;
+}
+
+td.label {
+    font-weight: bold;
+    color: #333333;
+}
+
+td.field {
+    font-weight: normal;
+    color: #333333;
+}
+
+td.item {
+    font-size: 10pt;
+    color: #000000;
+    border-bottom: #c0c0c0 1px solid;
+
+    height: 22px;
+    background-color: #ffffff;
+}
+
+td.itemselected {
+    font-size: 10pt;
+    color: #000000;
+    border-bottom: #c0c0c0 1px solid;
+
+    height: 22px;
+    background-color: #99ccff;
+}
+
+td.duplicate {
+    font-size: 10pt;
+    color: #cc0000;
+    border-bottom: #c0c0c0 1px solid;
+
+    height: 22px;
+    background-color: #ffffff;
+}
+
+td.action {
+    font-size: 10pt;
+    color: #000000;
+    border-bottom: #c0c0c0 1px solid;
+
+    height: 22px;
+    background-color: #ffffff;
+    text-align: center;
+}
+
+td.menuhead {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #ffffff;
+    text-indent: 8px;
+
+    background-color: #000000;
+}
+
+td.menuitem {
+    font-weight: normal;
+    font-size: 10pt;
+    color: #c02b27;
+    text-indent: 20px;
+
+    background-color: #000000;
+}
+
+a.menuitem:visited {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+a.menuitem:link {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+a.menuitem:hover {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff0000;
+    text-decoration: underline;
+}
+
+a:link {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff0000;
+    text-decoration: underline;
+}
+
+a:visited {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff0000;
+    text-decoration: underline;
+}
+
+a:link {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff0000;
+    text-decoration: underline;
+}
+
+a {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff0000;
+    text-decoration: underline;
+}
+
+a:hover {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff1010;
+    text-decoration: underline;
+}
+
+a:hover {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff1010;
+    text-decoration: underline;
+}
+
+span.button {
+    border-right: #99ccff 2px outset;
+    border-top: #99ccff 2px outset;
+    font-weight: bold;
+    font-size: 10pt;
+    padding-bottom: 3px;
+    border-left: #99ccff 2px outset;
+    width: 100px;
+    color: #ffffff;
+    padding-top: 2px;
+    border-bottom: #99ccff 2px outset;
+
+    background-color: #6699cc;
+    text-align: center;
+}
+
+td.step {
+    font-size: 14pt;
+
+    text-align: center;
+}
+
+td.stepon {
+    font-weight: bold;
+    font-size: 14pt;
+
+    text-align: center;
+}
+
+.bracket {
+    color: blue;
+}
+
+.node {
+    color: #990099;
+}
+
+.value {
+    font-weight: normal;
+}
+
+.tableborder {
+    border-right: #6699cc 1px solid;
+    border-top: #6699cc 1px solid;
+    border-left: #6699cc 1px solid;
+    border-bottom: #6699cc 1px solid;
+}
+
+.tableborderthick {
+    border-right: #000000 0px solid;
+    border-top: #000000 0px solid;
+    border-left: #000000 0px solid;
+    border-bottom: #000000 0px solid;
+}
+
+td.labelsmall {
+    font-size: 10pt;
+    color: black;
+    vertical-align: bottom;
+
+
+}
+
+td.labelmedium {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+
+}
+
+td.labelmediumbold {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+
+    text-align: right;
+    vertical-align: bottom;
+}
+
+td.labelmediumboldxx {
+    font-size: 9pt;
+    color: black;
+
+    text-align: right;
+}
+
+td.labelmediumbold111 {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+    border-bottom: #000000 2px solid;
+    text-align: center;
+}
+
+td.labelmediumbold333 {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+    border-bottom: #000000 2px solid;
+
+    text-align: left;
+}
+
+td.labelmediumbold222 {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+    border-bottom: #000000 2px solid;
+
+    text-align: right;
+}
+
+td.labelmediumboldleft {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+
+    text-align: left;
+}
+
+td.labellarge {
+    font-size: 10pt;
+    color: black;
+
+}
+
+td.fieldsmall {
+    background: white;
+
+    height: 15px;
+}
+
+td.fieldmedium {
+    border-right: black thin solid;
+    border-top: black thin solid;
+    font-weight: normal;
+    background: white;
+    border-left: black thin solid;
+    border-bottom: black thin solid;
+
+    height: 18px;
+    text-align: right;
+}
+
+td.fieldlarge {
+    font-weight: bold;
+    font-size: 10pt;
+    background: white;
+
+    text-align: right;
+}
+
+td.fieldlarge2 {
+    border-top: black 1px solid;
+    font-weight: bold;
+    font-size: 10pt;
+    background: white;
+    border-bottom: black 1px solid;
+
+    text-align: right;
+}
+
+td.fieldlarge1 {
+
+    font-weight: bold;
+    font-size: 10pt;
+    background: #ccc;
+    border: #330033 1px outset;
+    color: black;
+
+
+    text-align: center;
+}
+
+td.headingnew {
+    font-weight: bold;
+    font-size: 12pt;
+    color: black;
+    height: 30px;
+    padding-left: 10px;
+    border-bottom: #330033 1px outset;
+    background-color: #ccc;
+}
+
+td.headingnew5 {
+    font-weight: normal;
+    font-size: 16pt;
+    color: black;
+
+    height: 30px;
+    background-color: #ffffff;
+    text-align: left;
+}
+
+td.headingnew6 {
+    font-weight: normal;
+    font-size: 14pt;
+    color: black;
+    font-family: arial, helvetica, sans-serif;
+    height: 30px;
+    background-color: #ffffff;
+
+}
+
+
+td.headingnew1 {
+    font-weight: bold;
+    font-size: 12pt;
+    color: black;
+
+    height: 30px;
+}
+
+tr.headercolour {
+    background-color: #6699cc;
+}
+
+td.headerfont {
+    font-weight: bold;
+    font-size: 10pt;
+
+    background-color: #6699cc;
+}
+
+td.headerfontsmall {
+    font-weight: lighter;
+    font-size: 10pt;
+    color: #330033;
+
+    background-color: #6699cc;
+}

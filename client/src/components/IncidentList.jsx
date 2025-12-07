@@ -121,15 +121,15 @@ export default function IncidentList() {
         'Client',
         'Consultant',
         'Incident Reported By',
-        'Place of Incident',
-        'Port of Discharge',
-        'Port of Loading',
         'Local Agent',
         'Loss Cause',
         'Loss Type',
         'Members/Managers',
-        'Status',
+        'Place of Incident',
+        'Port of Discharge',
+        'Port of Loading',
         'Receiver/Shipper',
+        'Status',
         'Type of Incident',
         'Vessel'
     ]
@@ -165,7 +165,8 @@ export default function IncidentList() {
                     { id: 'Closed', name: 'Closed' },
                     { id: 'Repudiated', name: 'Repudiated' },
                     { id: 'Withdrawn', name: 'Withdrawn' },
-                    { id: 'Outstanding', name: 'Outstanding' }
+                    { id: 'Outstanding', name: 'Outstanding' },
+                    { id: 'Discarded', name: 'Discarded' }
                 ]);
                 return;
             default: return;
@@ -284,6 +285,7 @@ export default function IncidentList() {
             case 'CLOSED':
             case 'REPUDIATED':
             case 'WITHDRAWN':
+            case 'DISCARDED':
                 return 'bg-slate-100 text-slate-700 ring-slate-600/20'
             default:
                 return 'bg-gray-100 text-gray-700 ring-gray-600/20'

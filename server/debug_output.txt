@@ -1,71 +1,37 @@
 Connected to SQL Server
-Latest Incident: {
-  id: '102877',
-  berthing_date: 2025-11-21T00:00:00.000Z,
-  closing_date: null,
-  club_reference: 'Ioanna Peraki',
-  description: 'Vessel fixed to load ~62,500 mt of soya beans at Tiplam Terminal. Proinde will perform the full lp package at USD 0.06/ton, plus eventual boat.',
-  effective_disposal_date: null,
-  estimated_disposal_date: null,
-  incident_date: null,
-  latest_report_date: null,
-  next_review_date: null,
-  reference_number: 658,
-  reference_sub_number: 3,
-  reference_year: 2025,
-  reporting_date: 2025-11-18T00:00:00.000Z,
-  status: 'OPEN',
-  time_bar_date: 2026-11-21T00:00:00.000Z,
-  voyage_and_leg: null,
-  club_id: '42',
-  handler_id: '23',
-  local_agent_id: '575',
-  local_office_id: '1',
-  member_id: '12439',
-  owner_id: '399',
-  place_id: '458',
-  reporter_id: '10',
-  ship_id: '19660',
-  type_id: '65',
-  created_by_user: null,
-  created_date: null,
-  last_modified_by_user: null,
-  last_modified_date: null
+Fetching all members...
+Found 5614 members.
+First member: {
+  id: '2',
+  name: 'A B Maritime Inc.',
+  line1: null,
+  line2: null,
+  line3: null,
+  line4: null,
+  member_id: null,
+  vat_number: null
 }
-Testing get_reference_number...
-Reference Number Result: { formatted_reference: '0658/25/SM/RDN-3' }
-Testing full route query...
-Full Query Result: {
-  id: '102877',
-  berthing_date: 2025-11-21T00:00:00.000Z,
-  closing_date: null,
-  club_reference: 'Ioanna Peraki',
-  description: 'Vessel fixed to load ~62,500 mt of soya beans at Tiplam Terminal. Proinde will perform the full lp package at USD 0.06/ton, plus eventual boat.',
-  effective_disposal_date: null,
-  estimated_disposal_date: null,
-  incident_date: null,
-  latest_report_date: null,
-  next_review_date: null,
-  reference_number: 658,
-  reference_sub_number: 3,
-  reference_year: 2025,
-  reporting_date: 2025-11-18T00:00:00.000Z,
-  status: 'OPEN',
-  time_bar_date: 2026-11-21T00:00:00.000Z,
-  voyage_and_leg: null,
-  club_id: '42',
-  handler_id: '23',
-  local_agent_id: '575',
-  local_office_id: '1',
-  member_id: '12439',
-  owner_id: '399',
-  place_id: '458',
-  reporter_id: '10',
-  ship_id: '19660',
-  type_id: '65',
-  created_by_user: null,
-  created_date: null,
-  last_modified_by_user: null,
-  last_modified_date: null,
-  formatted_reference: '0658/25/SM/RDN-3'
+Fetching member by ID: 2...
+Single fetch result: {
+  id: '2',
+  name: 'A B Maritime Inc.',
+  line1: null,
+  line2: null,
+  line3: null,
+  line4: null,
+  member_id: null,
+  vat_number: null
 }
+Checking member table schema...
+┌─────────┬──────────────┬───────────┬──────────────────────────┬─────────────┐
+│ (index) │ COLUMN_NAME  │ DATA_TYPE │ CHARACTER_MAXIMUM_LENGTH │ IS_NULLABLE │
+├─────────┼──────────────┼───────────┼──────────────────────────┼─────────────┤
+│ 0       │ 'id'         │ 'bigint'  │ null                     │ 'NO'        │
+│ 1       │ 'name'       │ 'varchar' │ 150                      │ 'NO'        │
+│ 2       │ 'line1'      │ 'varchar' │ 255                      │ 'YES'       │
+│ 3       │ 'line2'      │ 'varchar' │ 255                      │ 'YES'       │
+│ 4       │ 'line3'      │ 'varchar' │ 255                      │ 'YES'       │
+│ 5       │ 'line4'      │ 'varchar' │ 255                      │ 'YES'       │
+│ 6       │ 'member_id'  │ 'bigint'  │ null                     │ 'YES'       │
+│ 7       │ 'vat_number' │ 'varchar' │ 50                       │ 'YES'       │
+└─────────┴──────────────┴───────────┴──────────────────────────┴─────────────┘

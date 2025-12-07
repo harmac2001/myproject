@@ -16,10 +16,15 @@ router.get('/incident/:incidentId', async (req, res) => {
                     e.description,
                     e.expense_value as amount,
                     e.expense_date as date,
+                    e.account_id,
+                    e.service_provider_id,
                     COALESCE(sp.friendly_name, sp.name) as paid_to,
-                    'USD' as currency
+                    'USD' as currency,
+                    (e.expense_value / NULLIF(dr.purchase_value, 0)) as amount_usd,
+                    dr.purchase_value as exchange_rate
                 FROM expense e
                 LEFT JOIN service_provider sp ON e.service_provider_id = sp.id
+                LEFT JOIN dollar_rate dr ON e.expense_date = dr.rate_date
                 WHERE e.incident_id = @incident_id 
                 ORDER BY e.expense_date DESC
             `);
@@ -34,22 +39,20 @@ router.get('/incident/:incidentId', async (req, res) => {
 // POST create new expense
 router.post('/', async (req, res) => {
     try {
-        const { incident_id, description, amount, currency, date, paid_to } = req.body;
+        const { incident_id, description, amount, currency, date, paid_to, account_id, service_provider_id } = req.body;
         const pool = await poolPromise;
-
-        // Note: paid_to is text from frontend, but DB expects service_provider_id.
-        // For now, we insert NULL for service_provider_id.
-        // In future, we should allow selecting a service provider.
 
         const result = await pool.request()
             .input('incident_id', sql.BigInt, incident_id)
             .input('description', sql.NVarChar, description)
             .input('amount', sql.Money, amount)
             .input('date', sql.Date, date)
+            .input('account_id', sql.Int, account_id || null)
+            .input('service_provider_id', sql.BigInt, service_provider_id || null)
             .query(`
-                INSERT INTO expense (incident_id, description, expense_value, expense_date, service_provider_id)
-                OUTPUT INSERTED.id, INSERTED.description, INSERTED.expense_value as amount, INSERTED.expense_date as date
-                VALUES (@incident_id, @description, @amount, @date, NULL)
+                INSERT INTO expense (incident_id, description, expense_value, expense_date, service_provider_id, account_id)
+                OUTPUT INSERTED.id, INSERTED.description, INSERTED.expense_value as amount, INSERTED.expense_date as date, INSERTED.account_id, INSERTED.service_provider_id
+                VALUES (@incident_id, @description, @amount, @date, @service_provider_id, @account_id)
             `);
 
         const newExpense = result.recordset[0];
@@ -67,7 +70,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { description, amount, currency, date, paid_to } = req.body;
+        const { description, amount, currency, date, paid_to, account_id, service_provider_id } = req.body;
         const pool = await poolPromise;
 
         const result = await pool.request()
@@ -75,12 +78,16 @@ router.put('/:id', async (req, res) => {
             .input('description', sql.NVarChar, description)
             .input('amount', sql.Money, amount)
             .input('date', sql.Date, date)
+            .input('account_id', sql.Int, account_id || null)
+            .input('service_provider_id', sql.BigInt, service_provider_id || null)
             .query(`
                 UPDATE expense
                 SET 
                     description = @description,
                     expense_value = @amount,
-                    expense_date = @date
+                    expense_date = @date,
+                    account_id = @account_id,
+                    service_provider_id = @service_provider_id
                 WHERE id = @id
             `);
 

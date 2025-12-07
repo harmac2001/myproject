@@ -1,0 +1,15 @@
+Connected to SQL Server
+┌─────────┬─────────────────────────────┬───────────┬─────────────┐
+│ (index) │ COLUMN_NAME                 │ DATA_TYPE │ IS_NULLABLE │
+├─────────┼─────────────────────────────┼───────────┼─────────────┤
+│ 0       │ 'third_party'               │ 'int'     │ 'NO'        │
+│ 1       │ 'id'                        │ 'bigint'  │ 'NO'        │
+│ 2       │ 'cost'                      │ 'numeric' │ 'NO'        │
+│ 3       │ 'fee_date'                  │ 'date'    │ 'NO'        │
+│ 4       │ 'quantity'                  │ 'numeric' │ 'NO'        │
+│ 5       │ 'unit'                      │ 'varchar' │ 'NO'        │
+│ 6       │ 'work_performed'            │ 'varchar' │ 'NO'        │
+│ 7       │ 'invoice_id'                │ 'bigint'  │ 'YES'       │
+│ 8       │ 'contractor_id'             │ 'bigint'  │ 'YES'       │
+│ 9       │ 'third_party_contractor_id' │ 'bigint'  │ 'YES'       │
+└─────────┴─────────────────────────────┴───────────┴─────────────┘

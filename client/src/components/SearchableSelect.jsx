@@ -1,7 +1,7 @@
 import { Search, ChevronDown, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
-const SearchableSelect = ({ options, value, onChange, placeholder, className, disabled, labelKey, searchable = true, allowCreate = false, onCreateNew, onEdit, onDelete }) => {
+const SearchableSelect = ({ options, value, onChange, placeholder, className, disabled, labelKey, searchable = true, allowCreate = false, onCreateNew, onEdit, onDelete, name }) => {
     const [isOpen, setIsOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const wrapperRef = useRef(null)
@@ -30,12 +30,26 @@ const SearchableSelect = ({ options, value, onChange, placeholder, className, di
     const displayValue = selectedOption ? getLabel(selectedOption) : ''
 
     const handleCreateNew = () => {
+        console.log('handleCreateNew triggered', { searchTerm, onCreateNew });
         if (onCreateNew) {
             onCreateNew(searchTerm)
             setIsOpen(false)
             setSearchTerm('')
         }
     }
+
+    // Debug logging
+    useEffect(() => {
+        if (isOpen) {
+            console.log('SearchableSelect open', {
+                placeholder,
+                allowCreate,
+                hasOnCreateNew: !!onCreateNew,
+                searchTerm,
+                filteredCount: filteredOptions.length
+            });
+        }
+    }, [isOpen, searchTerm, placeholder, allowCreate, onCreateNew, filteredOptions.length]);
 
     if (disabled) {
         return (
@@ -141,7 +155,10 @@ const SearchableSelect = ({ options, value, onChange, placeholder, className, di
                             {allowCreate && searchTerm.trim() && onCreateNew && (
                                 <div
                                     className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-green-50 text-green-700 border-t border-slate-100 flex items-center gap-2"
-                                    onClick={handleCreateNew}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleCreateNew()
+                                    }}
                                 >
                                     <Plus className="h-4 w-4" />
                                     <span className="font-medium">Add "{searchTerm}"</span>

@@ -21,10 +21,20 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
 
     const fetchMemberData = async () => {
         setLoading(true)
+        console.log('Fetching member data for ID:', memberId)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/members`)
-            const data = await response.json()
-            const member = data.find(m => m.id === memberId)
+            if (!memberId) throw new Error('No member ID provided')
+
+            const response = await fetch(`http://localhost:5000/api/options/members/${memberId}`)
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Member not found')
+                }
+                const text = await response.text()
+                throw new Error(text || 'Failed to fetch member')
+            }
+
+            const member = await response.json()
             if (member) {
                 setMemberData({
                     name: member.name || '',
@@ -37,7 +47,8 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
             }
         } catch (err) {
             console.error('Error fetching member:', err)
-            alert('Error loading member data')
+            alert(`Error loading member data: ${err.message}`)
+            onClose() // Close modal on error to prevent being stuck
         } finally {
             setLoading(false)
         }
@@ -109,6 +120,70 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
                                     className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     placeholder="Enter member name"
                                     autoFocus
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                                        Line 1
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={memberData.line1}
+                                        onChange={(e) => setMemberData({ ...memberData, line1: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Address line 1"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                                        Line 2
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={memberData.line2}
+                                        onChange={(e) => setMemberData({ ...memberData, line2: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Address line 2"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                                        Line 3
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={memberData.line3}
+                                        onChange={(e) => setMemberData({ ...memberData, line3: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Address line 3"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                                        Line 4
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={memberData.line4}
+                                        onChange={(e) => setMemberData({ ...memberData, line4: e.target.value })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Address line 4"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">
+                                    VAT Number
+                                </label>
+                                <input
+                                    type="text"
+                                    value={memberData.vat_number}
+                                    onChange={(e) => setMemberData({ ...memberData, vat_number: e.target.value })}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Enter VAT number"
                                 />
                             </div>
                         </div>
