@@ -23,7 +23,7 @@ app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/expenses', require('./routes/expenses'));
 
 // Health Check
-app.get('/', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.send('Incident Management API is running');
 });
 
