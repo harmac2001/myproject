@@ -1,0 +1,14 @@
+{
+  "name": "ims-web-root",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "install-server": "cd server && npm install",
+    "install-client": "cd client && npm install",
+    "heroku-postbuild": "npm run install-server && npm run install-client && cd client && npm run build",
+    "start": "node server/index.js"
+  }
+}
