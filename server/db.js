@@ -7,9 +7,10 @@ const config = {
     server: process.env.DB_SERVER,
     database: process.env.DB_NAME,
     options: {
-        encrypt: false, // Set to true if using Azure
+        encrypt: true, // Set to true if using Azure
         trustServerCertificate: true, // Set to true for local dev
-        enableArithAbort: true
+        enableArithAbort: true,
+        connectTimeout: 30000
     }
 };
 
