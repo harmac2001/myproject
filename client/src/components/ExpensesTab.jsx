@@ -10,7 +10,7 @@ export default function ExpensesTab({ incidentId }) {
 
     const fetchExpenses = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/expenses/incident/${incidentId}`)
+            const response = await fetch(`/api/expenses/incident/${incidentId}`)
             if (response.ok) {
                 const data = await response.json()
                 setExpenses(data)
@@ -29,7 +29,7 @@ export default function ExpensesTab({ incidentId }) {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this expense?')) {
             try {
-                const response = await fetch(`http://localhost:5000/api/expenses/${id}`, {
+                const response = await fetch(`/api/expenses/${id}`, {
                     method: 'DELETE'
                 })
                 if (response.ok) {

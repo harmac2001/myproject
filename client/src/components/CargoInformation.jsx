@@ -30,9 +30,9 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
         const fetchOptions = async () => {
             try {
                 const [cargoTypesRes, portsRes, tradersRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/options/cargo_types'),
-                    fetch('http://localhost:5000/api/options/ports'),
-                    fetch('http://localhost:5000/api/options/traders')
+                    fetch('/api/options/cargo_types'),
+                    fetch('/api/options/ports'),
+                    fetch('/api/options/traders')
                 ])
 
                 setCargoTypes(await cargoTypesRes.json())
@@ -54,7 +54,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
 
     const fetchCargo = async () => {
         try {
-            const res = await fetch(`http://localhost:5000/api/cargo/incident/${incidentId}`)
+            const res = await fetch(`/api/cargo/incident/${incidentId}`)
             const data = await res.json()
             if (data) {
                 setCargoExists(true)
@@ -118,7 +118,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
         console.log('Saving cargo data:', body)
 
         try {
-            const response = await fetch('http://localhost:5000/api/cargo', {
+            const response = await fetch('/api/cargo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)

@@ -79,15 +79,15 @@ export default function IncidentDetails() {
     // Fetch options
     useEffect(() => {
         const endpoints = [
-            { url: 'http://localhost:5000/api/options/ships', setter: setShips },
-            { url: 'http://localhost:5000/api/options/members', setter: setMembers },
-            { url: 'http://localhost:5000/api/options/clubs', setter: setClubs },
-            { url: 'http://localhost:5000/api/options/claim_handlers', setter: setClaimHandlers },
-            { url: 'http://localhost:5000/api/options/offices', setter: setOffices },
-            { url: 'http://localhost:5000/api/options/incident_types', setter: setIncidentTypes },
-            { url: 'http://localhost:5000/api/options/reporters', setter: setReporters },
-            { url: 'http://localhost:5000/api/options/agents', setter: setAgents },
-            { url: 'http://localhost:5000/api/options/ports', setter: setPorts }
+            { url: '/api/options/ships', setter: setShips },
+            { url: '/api/options/members', setter: setMembers },
+            { url: '/api/options/clubs', setter: setClubs },
+            { url: '/api/options/claim_handlers', setter: setClaimHandlers },
+            { url: '/api/options/offices', setter: setOffices },
+            { url: '/api/options/incident_types', setter: setIncidentTypes },
+            { url: '/api/options/reporters', setter: setReporters },
+            { url: '/api/options/agents', setter: setAgents },
+            { url: '/api/options/ports', setter: setPorts }
         ]
 
         endpoints.forEach(({ url, setter }) => {
@@ -115,7 +115,7 @@ export default function IncidentDetails() {
             const today = new Date()
             const oneYearLater = new Date(today)
             // Check if cargo exists for this incident
-            fetch(`http://localhost:5000/api/cargo/incident/${id}`)
+            fetch(`/api/cargo/incident/${id}`)
                 .then(res => res.json())
                 .then(cargoData => {
                     if (cargoData) {
@@ -134,7 +134,7 @@ export default function IncidentDetails() {
                 .catch(err => console.error('Error checking cargo:', err))
 
             // Check if claim details exist for this incident
-            fetch(`http://localhost:5000/api/claims/${id}`)
+            fetch(`/api/claims/${id}`)
                 .then(res => res.json())
                 .then(claimData => {
                     if (claimData) {
@@ -153,7 +153,7 @@ export default function IncidentDetails() {
                 .catch(err => console.error('Error checking claim:', err))
 
             // Check if comments exist for this incident
-            fetch(`http://localhost:5000/api/comments/${id}`)
+            fetch(`/api/comments/${id}`)
                 .then(res => res.json())
                 .then(commentsData => {
                     if (commentsData && commentsData.length > 0) {
@@ -183,8 +183,8 @@ const handleSubmit = async (e) => {
     setSaving(true)
 
     const url = isNew
-        ? 'http://localhost:5000/api/incidents'
-        : `http://localhost:5000/api/incidents/${id}`
+        ? '/api/incidents'
+        : `/api/incidents/${id}`
 
     const method = isNew ? 'POST' : 'PUT'
 
@@ -224,7 +224,7 @@ const handleSubmit = async (e) => {
 // Handle creating new ship - save directly without modal
 const handleCreateShip = async (searchTerm) => {
     try {
-        const response = await fetch('http://localhost:5000/api/options/ships', {
+        const response = await fetch('/api/options/ships', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: searchTerm.trim() })
@@ -283,7 +283,7 @@ const handleCloseTab = async (tabToClose) => {
     if (tabToClose === 'cargo') {
         if (window.confirm("Closing this tab will permanently delete all cargo information associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
             try {
-                const response = await fetch(`http://localhost:5000/api/cargo/incident/${id}`, {
+                const response = await fetch(`/api/cargo/incident/${id}`, {
                     method: 'DELETE'
                 })
 
@@ -305,7 +305,7 @@ const handleCloseTab = async (tabToClose) => {
     } else if (tabToClose === 'claim') {
         if (window.confirm("Closing this tab will permanently delete all claim details associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
             try {
-                const response = await fetch(`http://localhost:5000/api/claims/${id}`, {
+                const response = await fetch(`/api/claims/${id}`, {
                     method: 'DELETE'
                 })
 
@@ -328,12 +328,12 @@ const handleCloseTab = async (tabToClose) => {
         if (window.confirm("Closing this tab will permanently delete all comments associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
             try {
                 // Get all comments for this incident
-                const commentsRes = await fetch(`http://localhost:5000/api/comments/${id}`)
+                const commentsRes = await fetch(`/api/comments/${id}`)
                 const comments = await commentsRes.json()
 
                 // Delete all comments
                 for (const comment of comments) {
-                    await fetch(`http://localhost:5000/api/comments/${comment.id}`, {
+                    await fetch(`/api/comments/${comment.id}`, {
                         method: 'DELETE'
                     })
                 }

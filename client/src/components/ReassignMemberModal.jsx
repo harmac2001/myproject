@@ -17,7 +17,7 @@ export default function ReassignMemberModal({ isOpen, onClose, memberId, memberN
     const fetchIncidentsUsingMember = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/members/${memberId}/incidents`)
+            const response = await fetch(`/api/options/members/${memberId}/incidents`)
             const data = await response.json()
             setIncidents(data)
         } catch (err) {
@@ -47,7 +47,7 @@ export default function ReassignMemberModal({ isOpen, onClose, memberId, memberN
 
             // Update member incidents
             for (const incident of memberIncidents) {
-                const response = await fetch(`http://localhost:5000/api/incidents/${incident.id}/reassign-member`, {
+                const response = await fetch(`/api/incidents/${incident.id}/reassign-member`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ newMemberId })
@@ -60,7 +60,7 @@ export default function ReassignMemberModal({ isOpen, onClose, memberId, memberN
 
             // Update manager incidents
             for (const incident of managerIncidents) {
-                const response = await fetch(`http://localhost:5000/api/incidents/${incident.id}/reassign-manager`, {
+                const response = await fetch(`/api/incidents/${incident.id}/reassign-manager`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ newManagerId: newMemberId })

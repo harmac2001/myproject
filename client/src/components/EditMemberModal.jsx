@@ -22,7 +22,7 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
     const fetchMemberData = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/members`)
+            const response = await fetch(`/api/options/members`)
             const data = await response.json()
             const member = data.find(m => m.id === memberId)
             if (member) {
@@ -51,7 +51,7 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
 
         setSaving(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/members/${memberId}`, {
+            const response = await fetch(`/api/options/members/${memberId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(memberData)

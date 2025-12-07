@@ -17,7 +17,7 @@ export default function CommentsTab({ incidentId }) {
     const fetchComments = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/comments/${incidentId}`)
+            const response = await fetch(`/api/comments/${incidentId}`)
             const data = await response.json()
             setComments(data)
             setOriginalComments(JSON.parse(JSON.stringify(data))) // Deep copy
@@ -66,7 +66,7 @@ export default function CommentsTab({ incidentId }) {
             for (const comment of comments) {
                 if (comment.isNew) {
                     // Create new comment
-                    await fetch('http://localhost:5000/api/comments', {
+                    await fetch('/api/comments', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -77,7 +77,7 @@ export default function CommentsTab({ incidentId }) {
                     })
                 } else {
                     // Update existing comment
-                    await fetch(`http://localhost:5000/api/comments/${comment.id}`, {
+                    await fetch(`/api/comments/${comment.id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -94,7 +94,7 @@ export default function CommentsTab({ incidentId }) {
             )
             for (const comment of deletedComments) {
                 if (!comment.isNew) {
-                    await fetch(`http://localhost:5000/api/comments/${comment.id}`, {
+                    await fetch(`/api/comments/${comment.id}`, {
                         method: 'DELETE'
                     })
                 }

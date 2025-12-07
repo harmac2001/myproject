@@ -7,7 +7,7 @@ async function reproduceSubIncident() {
     console.log(`Attempting to create sub-incident for parent ID: ${parentId}`);
 
     try {
-        const response = await fetch(`http://localhost:5000/api/incidents/${parentId}/subincident`, {
+        const response = await fetch(`/api/incidents/${parentId}/subincident`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({}) // Body is empty as it copies from parent

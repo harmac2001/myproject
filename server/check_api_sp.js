@@ -1,6 +1,6 @@
 const http = require('http');
 
-http.get('http://localhost:5000/api/options/service_providers', (resp) => {
+http.get('/api/options/service_providers', (resp) => {
     let data = '';
 
     // A chunk of data has been received.

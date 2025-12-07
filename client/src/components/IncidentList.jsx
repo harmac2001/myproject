@@ -144,21 +144,21 @@ export default function IncidentList() {
         setAdvancedSearchValue('')
         let url = ''
         switch (advancedSearchCategory) {
-            case 'Vessel': url = 'http://localhost:5000/api/options/ships'; break;
-            case 'Client': url = 'http://localhost:5000/api/options/clubs'; break;
-            case 'Cargo Type': url = 'http://localhost:5000/api/options/cargo_types'; break;
-            case 'Claim Handler': url = 'http://localhost:5000/api/options/claim_handlers'; break;
-            case 'Consultant': url = 'http://localhost:5000/api/options/consultants'; break;
-            case 'Incident Reported By': url = 'http://localhost:5000/api/options/reporters'; break;
-            case 'Place of Incident': url = 'http://localhost:5000/api/options/ports'; break;
-            case 'Port of Discharge': url = 'http://localhost:5000/api/options/ports'; break;
-            case 'Port of Loading': url = 'http://localhost:5000/api/options/ports'; break;
-            case 'Local Agent': url = 'http://localhost:5000/api/options/agents'; break;
-            case 'Loss Cause': url = 'http://localhost:5000/api/options/loss_causes'; break;
-            case 'Loss Type': url = 'http://localhost:5000/api/options/loss_types'; break;
-            case 'Members/Managers': url = 'http://localhost:5000/api/options/members'; break;
-            case 'Receiver/Shipper': url = 'http://localhost:5000/api/options/receivers_shippers'; break;
-            case 'Type of Incident': url = 'http://localhost:5000/api/options/incident_types'; break;
+            case 'Vessel': url = '/api/options/ships'; break;
+            case 'Client': url = '/api/options/clubs'; break;
+            case 'Cargo Type': url = '/api/options/cargo_types'; break;
+            case 'Claim Handler': url = '/api/options/claim_handlers'; break;
+            case 'Consultant': url = '/api/options/consultants'; break;
+            case 'Incident Reported By': url = '/api/options/reporters'; break;
+            case 'Place of Incident': url = '/api/options/ports'; break;
+            case 'Port of Discharge': url = '/api/options/ports'; break;
+            case 'Port of Loading': url = '/api/options/ports'; break;
+            case 'Local Agent': url = '/api/options/agents'; break;
+            case 'Loss Cause': url = '/api/options/loss_causes'; break;
+            case 'Loss Type': url = '/api/options/loss_types'; break;
+            case 'Members/Managers': url = '/api/options/members'; break;
+            case 'Receiver/Shipper': url = '/api/options/receivers_shippers'; break;
+            case 'Type of Incident': url = '/api/options/incident_types'; break;
             case 'Status':
                 setAdvancedSearchOptions([
                     { id: 'Open', name: 'Open' },
@@ -204,7 +204,7 @@ export default function IncidentList() {
         params.append('page', page)
         params.append('limit', limit)
 
-        fetch(`http://localhost:5000/api/incidents?${params.toString()}`)
+        fetch(`/api/incidents?${params.toString()}`)
             .then(res => res.json())
             .then(data => {
                 const newIncidents = isLoadMore ? [...incidents, ...data.data] : data.data
@@ -220,7 +220,7 @@ export default function IncidentList() {
     }
 
     const fetchOptions = () => {
-        fetch('http://localhost:5000/api/options/offices')
+        fetch('/api/options/offices')
             .then(res => res.json())
             .then(data => {
                 setOffices(data)

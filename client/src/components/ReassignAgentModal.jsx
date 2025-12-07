@@ -17,7 +17,7 @@ export default function ReassignAgentModal({ isOpen, onClose, agentId, agentName
     const fetchIncidentsUsingAgent = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/agents/${agentId}/incidents`)
+            const response = await fetch(`/api/options/agents/${agentId}/incidents`)
             const data = await response.json()
             setIncidents(data)
         } catch (err) {
@@ -43,7 +43,7 @@ export default function ReassignAgentModal({ isOpen, onClose, agentId, agentName
         try {
             // Update all incidents to use the new agent
             for (const incident of incidents) {
-                const response = await fetch(`http://localhost:5000/api/incidents/${incident.id}/reassign-agent`, {
+                const response = await fetch(`/api/incidents/${incident.id}/reassign-agent`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ newAgentId })

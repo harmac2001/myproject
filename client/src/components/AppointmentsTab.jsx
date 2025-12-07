@@ -21,7 +21,7 @@ export default function AppointmentsTab({ incidentId }) {
     const fetchAppointments = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/appointments/incident/${incidentId}`)
+            const response = await fetch(`/api/appointments/incident/${incidentId}`)
             const data = await response.json()
             setAppointments(data)
             if (data.length > 0) {
@@ -36,7 +36,7 @@ export default function AppointmentsTab({ incidentId }) {
 
     const fetchConsultants = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/options/consultants')
+            const response = await fetch('/api/options/consultants')
             const data = await response.json()
             setConsultants(data)
         } catch (err) {
@@ -69,8 +69,8 @@ export default function AppointmentsTab({ incidentId }) {
         try {
             const method = currentAppointment.isNew ? 'POST' : 'PUT'
             const url = currentAppointment.isNew
-                ? 'http://localhost:5000/api/appointments'
-                : `http://localhost:5000/api/appointments/${currentAppointment.id}`
+                ? '/api/appointments'
+                : `/api/appointments/${currentAppointment.id}`
 
             await fetch(url, {
                 method,
@@ -94,7 +94,7 @@ export default function AppointmentsTab({ incidentId }) {
 
         setSaving(true)
         try {
-            await fetch(`http://localhost:5000/api/appointments/${currentAppointment.id}`, {
+            await fetch(`/api/appointments/${currentAppointment.id}`, {
                 method: 'DELETE'
             })
 

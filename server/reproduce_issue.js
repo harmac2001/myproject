@@ -27,7 +27,7 @@ async function reproduce() {
     };
 
     try {
-        const response = await fetch('http://localhost:5000/api/incidents', {
+        const response = await fetch('/api/incidents', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -46,7 +46,7 @@ async function reproduce() {
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
                 console.log(`Fetching incident ${json.id}...`);
-                const getRes = await fetch(`http://localhost:5000/api/incidents/${json.id}`);
+                const getRes = await fetch(`/api/incidents/${json.id}`);
                 const getText = await getRes.text();
                 console.log('Get Status:', getRes.status);
                 console.log('Get Response:', getText);
