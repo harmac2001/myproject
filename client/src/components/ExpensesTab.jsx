@@ -45,9 +45,11 @@ export default function ExpensesTab({ incidentId }) {
     }
 
     const totalAmount = expenses.reduce((sum, expense) => {
-        // Simple sum assuming all are same currency or just summing numbers for now
-        // In a real app, you'd handle currency conversion or separate totals
         return sum + Number(expense.amount)
+    }, 0)
+
+    const totalAmountUSD = expenses.reduce((sum, expense) => {
+        return sum + (expense.amount_usd ? Number(expense.amount_usd) : 0)
     }, 0)
 
     if (loading) return <div className="p-4">Loading expenses...</div>
@@ -75,21 +77,29 @@ export default function ExpensesTab({ incidentId }) {
                             <th className="px-4 py-3">Description</th>
                             <th className="px-4 py-3">Paid To</th>
                             <th className="px-4 py-3 text-right">Amount</th>
+                            <th className="px-4 py-3 text-right">ROE</th>
+                            <th className="px-4 py-3 text-right">Amount (USD)</th>
                             <th className="px-4 py-3 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                         {expenses.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
+                                <td colSpan="7" className="px-4 py-8 text-center text-slate-500">
                                     No expenses recorded yet.
                                 </td>
                             </tr>
                         ) : (
                             expenses.map((expense) => (
                                 <tr key={expense.id} className="hover:bg-slate-50">
-                                    <td className="px-4 py-3 text-slate-600">
-                                        {new Date(expense.date).toLocaleDateString()}
+                                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                                        {(() => {
+                                            const d = new Date(expense.date)
+                                            const day = String(d.getUTCDate()).padStart(2, '0')
+                                            const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+                                            const year = d.getUTCFullYear()
+                                            return `${day}-${month}-${year}`
+                                        })()}
                                     </td>
                                     <td className="px-4 py-3 text-slate-800 font-medium">
                                         {expense.description}
@@ -98,10 +108,25 @@ export default function ExpensesTab({ incidentId }) {
                                         {expense.paid_to || '-'}
                                     </td>
                                     <td className="px-4 py-3 text-right text-slate-800 font-mono">
-                                        {Number(expense.amount).toLocaleString('en-US', {
+                                        {Number(expense.amount).toLocaleString('pt-BR', {
                                             style: 'currency',
-                                            currency: expense.currency || 'USD'
+                                            currency: 'BRL',
+                                            currencyDisplay: 'code'
                                         })}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-slate-600 font-mono">
+                                        {expense.exchange_rate
+                                            ? Number(expense.exchange_rate).toLocaleString('en-US', { minimumFractionDigits: 4 })
+                                            : '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-slate-800 font-mono">
+                                        {expense.amount_usd
+                                            ? Number(expense.amount_usd).toLocaleString('en-US', {
+                                                style: 'currency',
+                                                currency: 'USD',
+                                                currencyDisplay: 'code'
+                                            })
+                                            : '-'}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <div className="flex items-center justify-center gap-2">
@@ -132,9 +157,18 @@ export default function ExpensesTab({ incidentId }) {
                         <tr>
                             <td colSpan="3" className="px-4 py-3 text-right">Total Paid:</td>
                             <td className="px-4 py-3 text-right font-mono text-lg text-blue-700">
-                                {totalAmount.toLocaleString('en-US', {
+                                {totalAmount.toLocaleString('pt-BR', {
                                     style: 'currency',
-                                    currency: 'USD' // Defaulting to USD for total display
+                                    currency: 'BRL',
+                                    currencyDisplay: 'code'
+                                })}
+                            </td>
+                            <td></td>
+                            <td className="px-4 py-3 text-right font-mono text-lg text-blue-700">
+                                {totalAmountUSD.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: 'USD',
+                                    currencyDisplay: 'code'
                                 })}
                             </td>
                             <td></td>

@@ -1,0 +1,17 @@
+Connected to SQL Server
+┌─────────┬─────────────────┬───────────┐
+│ (index) │ COLUMN_NAME     │ DATA_TYPE │
+├─────────┼─────────────────┼───────────┤
+│ 0       │ 'id'            │ 'bigint'  │
+│ 1       │ 'name'          │ 'varchar' │
+│ 2       │ 'line1'         │ 'varchar' │
+│ 3       │ 'line2'         │ 'varchar' │
+│ 4       │ 'line3'         │ 'varchar' │
+│ 5       │ 'line4'         │ 'varchar' │
+│ 6       │ 'alias_name'    │ 'varchar' │
+│ 7       │ 'club_id'       │ 'bigint'  │
+│ 8       │ 'code'          │ 'varchar' │
+│ 9       │ 'incident_club' │ 'bit'     │
+│ 10      │ 'manager'       │ 'varchar' │
+│ 11      │ 'vat_number'    │ 'varchar' │
+└─────────┴─────────────────┴───────────┘

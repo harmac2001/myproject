@@ -1,33 +1,53 @@
 import React, { useState, useEffect } from 'react'
 import { X, Save, Ban } from 'lucide-react'
+import SearchableSelect from './SearchableSelect'
 
 export default function AddExpenseModal({ isOpen, onClose, incidentId, onSaved, expenseToEdit = null }) {
     const [formData, setFormData] = useState({
         description: '',
         amount: '',
-        currency: 'USD',
+        currency: 'BRL',
         date: new Date().toISOString().split('T')[0],
-        paid_to: ''
+        paid_to: '',
+        account_id: '',
+        service_provider_id: ''
     })
     const [saving, setSaving] = useState(false)
+    const [accounts, setAccounts] = useState([])
+    const [serviceProviders, setServiceProviders] = useState([])
 
     useEffect(() => {
         if (isOpen) {
+            // Fetch options
+            fetch('http://localhost:5000/api/options/account_charts')
+                .then(res => res.json())
+                .then(data => setAccounts(data.map(a => ({ ...a, displayName: `${a.code} - ${a.name}` }))))
+                .catch(err => console.error('Error fetching accounts:', err))
+
+            fetch('http://localhost:5000/api/options/service_providers')
+                .then(res => res.json())
+                .then(data => setServiceProviders(data))
+                .catch(err => console.error('Error fetching service providers:', err))
+
             if (expenseToEdit) {
                 setFormData({
                     description: expenseToEdit.description,
                     amount: expenseToEdit.amount,
-                    currency: expenseToEdit.currency,
+                    currency: expenseToEdit.currency || 'BRL',
                     date: expenseToEdit.date.split('T')[0],
-                    paid_to: expenseToEdit.paid_to || ''
+                    paid_to: expenseToEdit.paid_to || '',
+                    account_id: expenseToEdit.account_id || '',
+                    service_provider_id: expenseToEdit.service_provider_id || ''
                 })
             } else {
                 setFormData({
                     description: '',
                     amount: '',
-                    currency: 'USD',
+                    currency: 'BRL',
                     date: new Date().toISOString().split('T')[0],
-                    paid_to: ''
+                    paid_to: '',
+                    account_id: '',
+                    service_provider_id: ''
                 })
             }
         }
@@ -95,31 +115,16 @@ export default function AddExpenseModal({ isOpen, onClose, incidentId, onSaved, 
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Amount *</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                required
-                                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={formData.amount}
-                                onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Currency</label>
-                            <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={formData.currency}
-                                onChange={e => setFormData({ ...formData, currency: e.target.value })}
-                            >
-                                <option value="USD">USD</option>
-                                <option value="EUR">EUR</option>
-                                <option value="GBP">GBP</option>
-                                <option value="BRL">BRL</option>
-                            </select>
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Amount *</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            required
+                            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={formData.amount}
+                            onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                        />
                     </div>
 
                     <div>
@@ -134,12 +139,27 @@ export default function AddExpenseModal({ isOpen, onClose, incidentId, onSaved, 
                     </div>
 
                     <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Account</label>
+                        <SearchableSelect
+                            options={accounts}
+                            value={formData.account_id}
+                            onChange={(val) => setFormData({ ...formData, account_id: val })}
+                            placeholder="Select Account"
+                            labelKey="displayName"
+                            className="w-full"
+                            name="account"
+                        />
+                    </div>
+
+                    <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Paid To</label>
-                        <input
-                            type="text"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={formData.paid_to}
-                            onChange={e => setFormData({ ...formData, paid_to: e.target.value })}
+                        <SearchableSelect
+                            options={serviceProviders}
+                            value={formData.service_provider_id}
+                            onChange={(val) => setFormData({ ...formData, service_provider_id: val })}
+                            placeholder="Select Service Provider"
+                            className="w-full"
+                            name="paid_to"
                         />
                     </div>
 
