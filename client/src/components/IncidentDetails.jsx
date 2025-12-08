@@ -115,15 +115,15 @@ export default function IncidentDetails() {
     // Fetch options
     useEffect(() => {
         const endpoints = [
-            { url: 'http://localhost:5000/api/options/ships', setter: setShips },
-            { url: 'http://localhost:5000/api/options/members', setter: setMembers },
-            { url: 'http://localhost:5000/api/options/clubs', setter: setClubs },
-            { url: 'http://localhost:5000/api/options/claim_handlers', setter: setClaimHandlers },
-            { url: 'http://localhost:5000/api/options/offices', setter: setOffices },
-            { url: 'http://localhost:5000/api/options/incident_types', setter: setIncidentTypes },
-            { url: 'http://localhost:5000/api/options/reporters', setter: setReporters },
-            { url: 'http://localhost:5000/api/options/agents', setter: setAgents },
-            { url: 'http://localhost:5000/api/options/ports', setter: setPorts }
+            { url: '/api/options/ships', setter: setShips },
+            { url: '/api/options/members', setter: setMembers },
+            { url: '/api/options/clubs', setter: setClubs },
+            { url: '/api/options/claim_handlers', setter: setClaimHandlers },
+            { url: '/api/options/offices', setter: setOffices },
+            { url: '/api/options/incident_types', setter: setIncidentTypes },
+            { url: '/api/options/reporters', setter: setReporters },
+            { url: '/api/options/agents', setter: setAgents },
+            { url: '/api/options/ports', setter: setPorts }
         ]
 
         endpoints.forEach(({ url, setter }) => {
@@ -176,7 +176,7 @@ export default function IncidentDetails() {
     useEffect(() => {
         if (!isNew && id) {
             setLoading(true)
-            fetch(`http://localhost:5000/api/incidents/${id}`)
+            fetch(`/api/incidents/${id}`)
                 .then(res => {
                     if (!res.ok) {
                         throw new Error(`HTTP error! status: ${res.status}`)
@@ -217,7 +217,7 @@ export default function IncidentDetails() {
                     setLoading(false)
 
                     // Check if cargo exists for this incident
-                    fetch(`http://localhost:5000/api/cargo/incident/${id}`)
+                    fetch(`/api/cargo/incident/${id}`)
                         .then(res => res.json())
                         .then(cargoData => {
                             if (cargoData) {
@@ -235,7 +235,7 @@ export default function IncidentDetails() {
                         .catch(err => console.error('Error checking cargo:', err))
 
                     // Check if claim details exist for this incident
-                    fetch(`http://localhost:5000/api/claims/${id}`)
+                    fetch(`/api/claims/${id}`)
                         .then(res => res.json())
                         .then(claimData => {
                             if (claimData) {
@@ -253,7 +253,7 @@ export default function IncidentDetails() {
                         .catch(err => console.error('Error checking claim:', err))
 
                     // Check if comments exist for this incident
-                    fetch(`http://localhost:5000/api/comments/${id}`)
+                    fetch(`/api/comments/${id}`)
                         .then(res => res.json())
                         .then(commentsData => {
                             if (commentsData && commentsData.length > 0) {
@@ -321,8 +321,8 @@ export default function IncidentDetails() {
 
         const method = isNew ? 'POST' : 'PUT'
         const url = isNew
-            ? 'http://localhost:5000/api/incidents'
-            : `http://localhost:5000/api/incidents/${id}`
+            ? '/api/incidents'
+            : `/api/incidents/${id}`
 
         // Sanitize data: convert empty strings to null for backend
         const sanitizedData = Object.fromEntries(
@@ -365,7 +365,7 @@ export default function IncidentDetails() {
 
     const handleCreateShip = async (name) => {
         try {
-            const response = await fetch('http://localhost:5000/api/options/ships', {
+            const response = await fetch('/api/ships', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name })
@@ -388,7 +388,7 @@ export default function IncidentDetails() {
 
     const handleCreateAgent = async (name) => {
         try {
-            const response = await fetch('http://localhost:5000/api/options/agents', {
+            const response = await fetch('/api/members', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name })
@@ -446,7 +446,7 @@ export default function IncidentDetails() {
     const handleDeleteVessel = async (vesselId) => {
         try {
             // Check if vessel is used in any incidents
-            const checkResponse = await fetch(`http://localhost:5000/api/options/ships/${vesselId}/incidents`)
+            const checkResponse = await fetch(`/api/options/ships/${vesselId}/incidents`)
             const incidents = await checkResponse.json()
 
             if (incidents.length > 0) {
@@ -467,7 +467,7 @@ export default function IncidentDetails() {
 
     const performVesselDeletion = async (vesselId) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/options/ships/${vesselId}`, {
+            const response = await fetch(`/api/options/ships/${vesselId}`, {
                 method: 'DELETE'
             })
 
@@ -478,7 +478,7 @@ export default function IncidentDetails() {
             }
 
             // Refresh ships list
-            const shipsResponse = await fetch('http://localhost:5000/api/options/ships')
+            const shipsResponse = await fetch('/api/options/ships')
             const shipsData = await shipsResponse.json()
             setShips(shipsData)
 
@@ -502,7 +502,7 @@ export default function IncidentDetails() {
         setIsManager(isManagerDeletion)
         try {
             // Check if member is used in any incidents
-            const checkResponse = await fetch(`http://localhost:5000/api/options/members/${memberId}/incidents`)
+            const checkResponse = await fetch(`/api/options/members/${memberId}/incidents`)
             const incidents = await checkResponse.json()
 
             if (incidents.length > 0) {
@@ -523,7 +523,7 @@ export default function IncidentDetails() {
 
     const performMemberDeletion = async (memberId) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/options/members/${memberId}`, {
+            const response = await fetch(`/api/options/members/${memberId}`, {
                 method: 'DELETE'
             })
 
@@ -534,7 +534,7 @@ export default function IncidentDetails() {
             }
 
             // Refresh members list
-            const membersResponse = await fetch('http://localhost:5000/api/options/members')
+            const membersResponse = await fetch('/api/options/members')
             const membersData = await membersResponse.json()
             setMembers(membersData)
 
@@ -560,7 +560,7 @@ export default function IncidentDetails() {
     const handleDeleteAgent = async (agentId) => {
         try {
             // Check if agent is used in any incidents
-            const checkResponse = await fetch(`http://localhost:5000/api/options/agents/${agentId}/incidents`)
+            const checkResponse = await fetch(`/api/options/agents/${agentId}/incidents`)
             const incidents = await checkResponse.json()
 
             if (incidents.length > 0) {
@@ -581,7 +581,7 @@ export default function IncidentDetails() {
 
     const performAgentDeletion = async (agentId) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/options/agents/${agentId}`, {
+            const response = await fetch(`/api/options/agents/${agentId}`, {
                 method: 'DELETE'
             })
 
@@ -592,7 +592,7 @@ export default function IncidentDetails() {
             }
 
             // Refresh agents list
-            const agentsResponse = await fetch('http://localhost:5000/api/options/agents')
+            const agentsResponse = await fetch('/api/options/agents')
             const agentsData = await agentsResponse.json()
             setAgents(agentsData)
 
@@ -608,7 +608,7 @@ export default function IncidentDetails() {
 
     const handleVesselSaved = async () => {
         // Refresh ships list
-        const response = await fetch('http://localhost:5000/api/options/ships')
+        const response = await fetch('/api/options/ships')
         const data = await response.json()
         setShips(data)
         setShowEditVesselModal(false)
@@ -618,7 +618,7 @@ export default function IncidentDetails() {
         if (tabToClose === 'cargo') {
             if (window.confirm("Closing this tab will permanently delete all cargo information associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/cargo/incident/${id}`, {
+                    const response = await fetch(`/api/cargo/incident/${id}`, {
                         method: 'DELETE'
                     })
 
@@ -640,7 +640,7 @@ export default function IncidentDetails() {
         } else if (tabToClose === 'claim') {
             if (window.confirm("Closing this tab will permanently delete all claim details associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/claims/${id}`, {
+                    const response = await fetch(`/api/claims/${id}`, {
                         method: 'DELETE'
                     })
 
@@ -663,12 +663,12 @@ export default function IncidentDetails() {
             if (window.confirm("Closing this tab will permanently delete all comments associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
                 try {
                     // Get all comments for this incident
-                    const commentsRes = await fetch(`http://localhost:5000/api/comments/${id}`)
+                    const commentsRes = await fetch(`/api/comments/${id}`)
                     const comments = await commentsRes.json()
 
                     // Delete all comments
                     for (const comment of comments) {
-                        await fetch(`http://localhost:5000/api/comments/${comment.id}`, {
+                        await fetch(`/api/comments/${comment.id}`, {
                             method: 'DELETE'
                         })
                     }
@@ -687,7 +687,7 @@ export default function IncidentDetails() {
         } else if (tabToClose === 'appointments') {
             if (window.confirm("Closing this tab will permanently delete all appointments associated with this incident. This action cannot be undone. Are you sure you want to proceed?")) {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/appointments/incident/${id}`, {
+                    const response = await fetch(`/api/appointments/incident/${id}`, {
                         method: 'DELETE'
                     })
 
@@ -1247,7 +1247,7 @@ export default function IncidentDetails() {
                 memberId={editingMemberId}
                 onSaved={() => {
                     // Refresh members list
-                    fetch('http://localhost:5000/api/options/members')
+                    fetch('/api/options/members')
                         .then(res => res.json())
                         .then(data => setMembers(data))
                 }}
@@ -1269,7 +1269,7 @@ export default function IncidentDetails() {
                 agentId={editingAgentId}
                 onSaved={() => {
                     // Refresh agents list
-                    fetch('http://localhost:5000/api/options/agents')
+                    fetch('/api/options/agents')
                         .then(res => res.json())
                         .then(data => setAgents(data))
                 }}

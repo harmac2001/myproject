@@ -2,7 +2,7 @@ const http = require('http');
 
 function testPrintEndpoint() {
     const incidentId = 102899;
-    const url = `http://localhost:5000/api/incidents/${incidentId}/print`;
+    const url = `/api/incidents/${incidentId}/print`;
 
     console.log(`Testing ${url}...`);
 

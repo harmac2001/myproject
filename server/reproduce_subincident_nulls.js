@@ -29,7 +29,7 @@ async function reproduce() {
 
     try {
         console.log('Creating parent incident...');
-        const createRes = await fetch('http://localhost:5000/api/incidents', {
+        const createRes = await fetch('/api/incidents', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(parentPayload)
@@ -49,7 +49,7 @@ async function reproduce() {
 
         // 2. Create sub-incident from this parent
         console.log(`Attempting to create sub-incident for parent ID: ${parentId}`);
-        const subRes = await fetch(`http://localhost:5000/api/incidents/${parentId}/subincident`, {
+        const subRes = await fetch(`/api/incidents/${parentId}/subincident`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({})

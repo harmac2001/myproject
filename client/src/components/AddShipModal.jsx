@@ -17,7 +17,7 @@ export default function AddShipModal({ isOpen, onClose, onSave, initialName = ''
         setError('')
 
         try {
-            const response = await fetch('http://localhost:5000/api/options/ships', {
+            const response = await fetch('/api/options/ships', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name.trim() })

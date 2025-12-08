@@ -23,18 +23,9 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
         setLoading(true)
         console.log('Fetching member data for ID:', memberId)
         try {
-            if (!memberId) throw new Error('No member ID provided')
-
-            const response = await fetch(`http://localhost:5000/api/options/members/${memberId}`)
-            if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error('Member not found')
-                }
-                const text = await response.text()
-                throw new Error(text || 'Failed to fetch member')
-            }
-
-            const member = await response.json()
+            const response = await fetch(`/api/options/members`)
+            const data = await response.json()
+            const member = data.find(m => m.id === memberId)
             if (member) {
                 setMemberData({
                     name: member.name || '',
@@ -62,7 +53,7 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
 
         setSaving(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/members/${memberId}`, {
+            const response = await fetch(`/api/options/members/${memberId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(memberData)

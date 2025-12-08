@@ -1,6 +1,6 @@
 const http = require('http');
 
-const url = 'http://localhost:5000/api/options/consultants';
+const url = '/api/options/consultants';
 
 console.log(`Testing ${url}...`);
 

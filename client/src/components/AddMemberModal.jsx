@@ -24,7 +24,7 @@ export default function AddMemberModal({ isOpen, onClose, onSave, initialName = 
         setError('')
 
         try {
-            const response = await fetch('http://localhost:5000/api/options/members', {
+            const response = await fetch('/api/options/members', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

@@ -15,7 +15,7 @@ export default function EditAgentModal({ isOpen, onClose, agentId, onSaved }) {
     const fetchAgentData = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/agents`)
+            const response = await fetch(`/api/options/agents`)
             const data = await response.json()
             const agent = data.find(a => a.id === agentId)
             if (agent) {
@@ -37,7 +37,7 @@ export default function EditAgentModal({ isOpen, onClose, agentId, onSaved }) {
 
         setSaving(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/agents/${agentId}`, {
+            const response = await fetch(`/api/options/agents/${agentId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(agentData)

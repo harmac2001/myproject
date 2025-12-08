@@ -8,7 +8,7 @@ export default function PrintableSheet() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetch(`http://localhost:5000/api/incidents/${id}/print`)
+        fetch(`/api/incidents/${id}/print`)
             .then(res => res.json())
             .then(data => {
                 setData(data)

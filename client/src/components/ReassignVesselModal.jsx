@@ -17,7 +17,7 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
     const fetchIncidentsUsingVessel = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/ships/${vesselId}/incidents`)
+            const response = await fetch(`/api/options/ships/${vesselId}/incidents`)
             const data = await response.json()
             setIncidents(data)
         } catch (err) {
@@ -43,7 +43,7 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
         try {
             // Update all incidents to use the new vessel
             for (const incident of incidents) {
-                const response = await fetch(`http://localhost:5000/api/incidents/${incident.id}/reassign-vessel`, {
+                const response = await fetch(`/api/incidents/${incident.id}/reassign-vessel`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ newVesselId })

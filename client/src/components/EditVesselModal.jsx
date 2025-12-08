@@ -15,7 +15,7 @@ export default function EditVesselModal({ isOpen, onClose, vesselId, onSaved }) 
     const fetchVesselData = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/ships`)
+            const response = await fetch(`/api/options/ships`)
             const data = await response.json()
             const vessel = data.find(s => s.id === vesselId)
             if (vessel) {
@@ -37,7 +37,7 @@ export default function EditVesselModal({ isOpen, onClose, vesselId, onSaved }) 
 
         setSaving(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/ships/${vesselId}`, {
+            const response = await fetch(`/api/options/ships/${vesselId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(vesselData)

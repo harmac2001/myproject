@@ -47,11 +47,11 @@ export default function ClaimDetails({ incidentId, isEditing: parentIsEditing })
         const fetchOptions = async () => {
             try {
                 const [lt, lc, tr, sp, cur] = await Promise.all([
-                    fetch('http://localhost:5000/api/options/loss_types').then(res => res.json()),
-                    fetch('http://localhost:5000/api/options/loss_causes').then(res => res.json()),
-                    fetch('http://localhost:5000/api/options/traders').then(res => res.json()),
-                    fetch('http://localhost:5000/api/options/service_providers').then(res => res.json()),
-                    fetch('http://localhost:5000/api/options/currencies').then(res => res.json())
+                    fetch('/api/options/loss_types').then(res => res.json()),
+                    fetch('/api/options/loss_causes').then(res => res.json()),
+                    fetch('/api/options/traders').then(res => res.json()),
+                    fetch('/api/options/service_providers').then(res => res.json()),
+                    fetch('/api/options/currencies').then(res => res.json())
                 ])
                 setLossTypes(lt)
                 setLossCauses(lc)
@@ -66,7 +66,7 @@ export default function ClaimDetails({ incidentId, isEditing: parentIsEditing })
         const fetchData = async () => {
             setLoading(true)
             try {
-                const res = await fetch(`http://localhost:5000/api/claims/${incidentId}`)
+                const res = await fetch(`/api/claims/${incidentId}`)
                 const data = await res.json()
                 if (data) {
                     setClaimExists(true)
@@ -123,7 +123,7 @@ export default function ClaimDetails({ incidentId, isEditing: parentIsEditing })
         }
 
         try {
-            const res = await fetch(`http://localhost:5000/api/claims/${incidentId}`, {
+            const res = await fetch(`/api/claims/${incidentId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
