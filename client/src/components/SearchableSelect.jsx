@@ -1,7 +1,7 @@
 import { Search, ChevronDown, Plus, Edit2, Trash2 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
-const SearchableSelect = ({ options, value, onChange, placeholder, className, disabled, labelKey, searchable = true, allowCreate = false, onCreateNew, onEdit, onDelete, name }) => {
+const SearchableSelect = ({ options, value, onChange, placeholder, className, disabled, labelKey, searchable = true, allowCreate = false, onCreateNew, onEdit, onDelete, name, disablePaste = false }) => {
     const [isOpen, setIsOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const wrapperRef = useRef(null)
@@ -23,7 +23,9 @@ const SearchableSelect = ({ options, value, onChange, placeholder, className, di
 
     const filteredOptions = searchable ? options.filter(opt => {
         const label = getLabel(opt)
-        return String(label).toLowerCase().includes(searchTerm.toLowerCase())
+        const code = opt.code ? String(opt.code) : ''
+        const searchLower = searchTerm.toLowerCase()
+        return String(label).toLowerCase().includes(searchLower) || code.toLowerCase().includes(searchLower)
     }) : options
 
     const selectedOption = options.find(opt => String(opt.id) === String(value))
@@ -144,6 +146,12 @@ const SearchableSelect = ({ options, value, onChange, placeholder, className, di
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 autoFocus
                                 onClick={(e) => e.stopPropagation()}
+                                onPaste={(e) => {
+                                    if (disablePaste) {
+                                        e.preventDefault()
+                                        return false
+                                    }
+                                }}
                             />
                         </div>
                     )}

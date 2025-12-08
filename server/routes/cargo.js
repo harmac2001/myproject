@@ -107,12 +107,14 @@ router.post('/', async (req, res) => {
                 .input('container_number', sql.NVarChar, containers)
                 .input('cargo_type_id', sql.BigInt, cargo_type_id)
                 .input('description', sql.NVarChar, description)
+                .input('now', sql.BigInt, Date.now())
                 .query(`
                     UPDATE cargo_information
                     SET bill_of_lading_number = @bill_of_lading_number,
                         container_number = @container_number,
                         cargo_type_id = @cargo_type_id,
-                        description = @description
+                        description = @description,
+                        last_modified_date = @now
                     WHERE incident_id = @incident_id
                 `);
         } else {
@@ -123,9 +125,10 @@ router.post('/', async (req, res) => {
                 .input('container_number', sql.NVarChar, containers)
                 .input('cargo_type_id', sql.BigInt, cargo_type_id)
                 .input('description', sql.NVarChar, description)
+                .input('now', sql.BigInt, Date.now())
                 .query(`
-                    INSERT INTO cargo_information (incident_id, bill_of_lading_number, container_number, cargo_type_id, description)
-                    VALUES (@incident_id, @bill_of_lading_number, @container_number, @cargo_type_id, @description)
+                    INSERT INTO cargo_information (incident_id, bill_of_lading_number, container_number, cargo_type_id, description, created_date, last_modified_date)
+                    VALUES (@incident_id, @bill_of_lading_number, @container_number, @cargo_type_id, @description, @now, @now)
                 `);
         }
 

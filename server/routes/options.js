@@ -549,6 +549,25 @@ router.get('/service_providers', async (req, res) => {
     }
 });
 
+// POST create new service provider
+router.post('/service_providers', async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Service Provider name is required');
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name.trim())
+            .query('INSERT INTO service_provider (name) OUTPUT INSERTED.id, INSERTED.name VALUES (@name)');
+
+        res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 // Get currencies
 router.get('/currencies', async (req, res) => {
     try {
@@ -566,6 +585,25 @@ router.get('/contractors', async (req, res) => {
         const pool = await poolPromise;
         const result = await pool.request().query('SELECT id, name FROM contractor ORDER BY name');
         res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// POST create new contractor
+router.post('/contractors', async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Contractor name is required');
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name.trim())
+            .query('INSERT INTO contractor (name) OUTPUT INSERTED.id, INSERTED.name VALUES (@name)');
+
+        res.status(201).json(result.recordset[0]);
     } catch (err) {
         res.status(500).send(err.message);
     }

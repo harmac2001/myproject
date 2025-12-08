@@ -3,10 +3,18 @@ import { Save, Ban, Edit2 } from 'lucide-react'
 import SearchableSelect from './SearchableSelect'
 import DateInput from './DateInput'
 
-export default function ClaimDetails({ incidentId }) {
+export default function ClaimDetails({ incidentId, isEditing: parentIsEditing }) {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
+
+    // Sync with parent edit state
+    useEffect(() => {
+        if (parentIsEditing !== undefined) {
+            setIsEditing(parentIsEditing)
+        }
+    }, [parentIsEditing])
+
     const [claimExists, setClaimExists] = useState(false)
 
     // Options

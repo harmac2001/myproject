@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { X, Save, Ban } from 'lucide-react'
 import SearchableSelect from './SearchableSelect'
+import AddServiceProviderModal from './AddServiceProviderModal'
+import AddContractorModal from './AddContractorModal'
 
 export default function AddFeeModal({ isOpen, onClose, invoiceId, type, onSaved, feeToEdit = null }) {
     const [formData, setFormData] = useState({
@@ -14,6 +16,10 @@ export default function AddFeeModal({ isOpen, onClose, invoiceId, type, onSaved,
     })
     const [saving, setSaving] = useState(false)
     const [options, setOptions] = useState([])
+    const [isAddProviderModalOpen, setIsAddProviderModalOpen] = useState(false)
+    const [pendingProviderName, setPendingProviderName] = useState('')
+    const [isAddContractorModalOpen, setIsAddContractorModalOpen] = useState(false)
+    const [pendingContractorName, setPendingContractorName] = useState('')
 
     useEffect(() => {
         const fetchOptions = async () => {
@@ -59,6 +65,26 @@ export default function AddFeeModal({ isOpen, onClose, invoiceId, type, onSaved,
             }
         }
     }, [isOpen, feeToEdit, type])
+
+    const handleCreateProvider = (name) => {
+        setPendingProviderName(name)
+        setIsAddProviderModalOpen(true)
+    }
+
+    const handleProviderSaved = (newProvider) => {
+        setOptions(prev => [...prev, newProvider])
+        setFormData(prev => ({ ...prev, third_party_contractor_id: newProvider.id }))
+    }
+
+    const handleCreateContractor = (name) => {
+        setPendingContractorName(name)
+        setIsAddContractorModalOpen(true)
+    }
+
+    const handleContractorSaved = (newContractor) => {
+        setOptions(prev => [...prev, newContractor])
+        setFormData(prev => ({ ...prev, contractor_id: newContractor.id }))
+    }
 
     if (!isOpen) return null
 
@@ -138,7 +164,7 @@ export default function AddFeeModal({ isOpen, onClose, invoiceId, type, onSaved,
     }
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
                     <h2 className="text-lg font-semibold text-slate-800">
@@ -174,6 +200,8 @@ export default function AddFeeModal({ isOpen, onClose, invoiceId, type, onSaved,
                             })}
                             placeholder={`Select ${type === 'correspondent' ? 'Contractor' : 'Provider'}`}
                             required
+                            allowCreate={true}
+                            onCreateNew={type === 'correspondent' ? handleCreateContractor : handleCreateProvider}
                         />
                     </div>
 
@@ -253,6 +281,18 @@ export default function AddFeeModal({ isOpen, onClose, invoiceId, type, onSaved,
                     </div>
                 </form>
             </div>
+            <AddServiceProviderModal
+                isOpen={isAddProviderModalOpen}
+                onClose={() => setIsAddProviderModalOpen(false)}
+                onSave={handleProviderSaved}
+                initialName={pendingProviderName}
+            />
+            <AddContractorModal
+                isOpen={isAddContractorModalOpen}
+                onClose={() => setIsAddContractorModalOpen(false)}
+                onSave={handleContractorSaved}
+                initialName={pendingContractorName}
+            />
         </div>
     )
 }
