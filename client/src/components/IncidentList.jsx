@@ -356,7 +356,7 @@ export default function IncidentList() {
                                     setAdvancedSearchCategory('')
                                     setAdvancedSearchValue('')
                                 }}
-                                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md border border-slate-300 transition-colors duration-200 flex items-center gap-2"
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg border border-slate-300 transition-colors duration-200 flex items-center gap-2"
                                 title="Reset all search filters"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

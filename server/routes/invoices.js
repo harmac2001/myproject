@@ -2,6 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { sql, poolPromise } = require('../db');
 
+// GET check if invoices exist for incident
+router.get('/check-exists/:incidentId', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('incident_id', sql.BigInt, req.params.incidentId)
+            .query('SELECT COUNT(*) as count FROM invoice WHERE incident_id = @incident_id');
+
+        res.json({ exists: result.recordset[0].count > 0, count: result.recordset[0].count });
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 // GET all invoices for an incident
 router.get('/incident/:incidentId', async (req, res) => {
     try {
@@ -308,6 +322,23 @@ router.put('/:id/register', async (req, res) => {
         const { id } = req.params;
         const pool = await poolPromise;
 
+        // Check mandatory fields
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT covered_from, covered_to, club_contact_id, office_contact_id FROM invoice WHERE id = @id');
+
+        if (checkResult.recordset.length === 0) {
+            return res.status(404).send('Invoice not found');
+        }
+
+        const inv = checkResult.recordset[0];
+        if (!inv.covered_from || !inv.covered_to || !inv.club_contact_id || !inv.office_contact_id) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: 'Mandatory fields missing: Covering Period, Recipient Contact, or Origin Contact.'
+            });
+        }
+
         // Generate next invoice number (simplified logic for now)
         const year = new Date().getFullYear();
 
@@ -525,6 +556,50 @@ router.patch('/:id/remarks', async (req, res) => {
         res.json({ message: 'Remarks updated successfully' });
     } catch (err) {
         console.error('Error updating remarks:', err);
+        res.status(500).send(err.message);
+    }
+});
+// DELETE Invoice
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // Check if invoice is registered
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT invoice_number FROM invoice WHERE id = @id');
+
+        if (checkResult.recordset.length === 0) {
+            return res.status(404).send('Invoice not found');
+        }
+
+        if (checkResult.recordset[0].invoice_number) {
+            return res.status(400).json({ message: 'Cannot delete a registered invoice.' });
+        }
+
+        const transaction = new sql.Transaction(pool);
+        await transaction.begin();
+
+        try {
+            const request = new sql.Request(transaction);
+            request.input('id', sql.BigInt, id);
+
+            // Delete dependent records first
+            await request.query('DELETE FROM fee WHERE invoice_id = @id');
+            await request.query('DELETE FROM disbursement WHERE invoice_id = @id');
+
+            // Delete the invoice itself
+            await request.query('DELETE FROM invoice WHERE id = @id');
+
+            await transaction.commit();
+            res.json({ message: 'Invoice deleted successfully' });
+        } catch (err) {
+            await transaction.rollback();
+            throw err;
+        }
+    } catch (err) {
+        console.error('Error deleting invoice:', err);
         res.status(500).send(err.message);
     }
 });

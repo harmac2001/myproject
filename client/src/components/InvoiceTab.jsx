@@ -5,8 +5,49 @@ import AddFeeModal from './AddFeeModal'
 import SearchableSelect from './SearchableSelect'
 
 import EditContactModal from './EditContactModal'
+import AddContactModal from './AddContactModal'
 import ReassignContactModal from './ReassignContactModal'
 import AddDisbursementModal from './AddDisbursementModal'
+
+const DateInput = ({ value, onChange, placeholder, className, onClick, disabled }) => {
+    const [inputType, setInputType] = useState('text')
+
+    // Format helper: yyyy-mm-dd -> dd/mm/yyyy
+    const formatDate = (val) => {
+        if (!val) return ''
+        // Handle ISO string or YYYY-MM-DD
+        const datePart = val.split('T')[0]
+        const [year, month, day] = datePart.split('-')
+        // Ensure we have valid parts
+        if (!year || !month || !day) return ''
+        return `${day}/${month}/${year}`
+    }
+
+    // When focused, show date input (iso value). When blurred, show text input (formatted value).
+    // Note: input type="date" expects yyyy-mm-dd
+    const displayValue = inputType === 'date'
+        ? (value ? value.split('T')[0] : '')
+        : formatDate(value)
+
+    return (
+        <input
+            type={inputType}
+            placeholder={placeholder}
+            className={className}
+            value={displayValue}
+            onFocus={(e) => {
+                if (!disabled) {
+                    setInputType('date')
+                    e.target.showPicker && e.target.showPicker() // Optional: auto-open picker
+                }
+            }}
+            onBlur={() => setInputType('text')}
+            onChange={onChange}
+            onClick={onClick}
+            disabled={disabled}
+        />
+    )
+}
 
 export default function InvoiceTab({ incidentId, incident }) {
     const [invoices, setInvoices] = useState([])
@@ -21,8 +62,10 @@ export default function InvoiceTab({ incidentId, incident }) {
     const [feeToEdit, setFeeToEdit] = useState(null)
 
     // Contact Modal State
+    const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false)
     const [isEditContactModalOpen, setIsEditContactModalOpen] = useState(false)
     const [isReassignContactModalOpen, setIsReassignContactModalOpen] = useState(false)
+    const [pendingContactName, setPendingContactName] = useState('')
     const [contactToEdit, setContactToEdit] = useState(null)
     const [contactToDelete, setContactToDelete] = useState(null)
 
@@ -172,11 +215,27 @@ export default function InvoiceTab({ incidentId, incident }) {
 
     const handleCreateInvoice = async () => {
         try {
+            // Check for existing invoices to determine Covering From date
+            const checkRes = await fetch(`http://localhost:5000/api/invoices/check-exists/${incidentId}`)
+            const checkData = await checkRes.json()
+
+            // Default Covering From: Incident Created Date if 0 invoices, else blank
+            let defaultFrom = ''
+            if (!checkData.exists && incident?.created_date) {
+                try {
+                    defaultFrom = new Date(parseInt(incident.created_date)).toISOString().split('T')[0]
+                } catch (e) {
+                    console.error('Error parsing incident date:', e)
+                }
+            }
+
             const res = await fetch('http://localhost:5000/api/invoices', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     incident_id: incidentId,
+                    covered_from: defaultFrom,
+                    covered_to: new Date().toISOString().split('T')[0],
                     other_information: 'This invoice is subject to our payment terms and conditions, which are available at https://proinde.com.br/payment_terms/.'
                 })
             })
@@ -226,7 +285,15 @@ export default function InvoiceTab({ incidentId, incident }) {
     }
 
     const handleRegister = async () => {
-        if (!selectedInvoice || !window.confirm('Are you sure you want to register this invoice? This will assign an Invoice Number.')) return
+        if (!selectedInvoice) return
+
+        // Validation for mandatory fields before registering
+        if (!selectedInvoice.covered_from || !selectedInvoice.covered_to || !selectedInvoice.club_contact_id || !selectedInvoice.office_contact_id) {
+            alert('Cannot register invoice. Please fill in all mandatory fields:\n- Covering Period (From & To)\n- Recipient Contact (Club)\n- Origin Contact (Office)')
+            return
+        }
+
+        if (!window.confirm('Are you sure you want to register this invoice? This will assign an Invoice Number.')) return
 
         try {
             const res = await fetch(`http://localhost:5000/api/invoices/${selectedInvoice.id}/register`, {
@@ -279,24 +346,28 @@ export default function InvoiceTab({ incidentId, incident }) {
         }
     }
 
-    const handleMarkSettled = async (e, invoiceId) => {
+    const handleDeleteInvoice = async (e, invoiceId) => {
         e.stopPropagation() // Prevent row click
-        if (!window.confirm('Mark this invoice as settled today?')) return
+
+        if (!window.confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) return
 
         try {
-            const res = await fetch(`http://localhost:5000/api/invoices/${invoiceId}/settle`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ settlement_date: new Date().toISOString().split('T')[0] })
+            const res = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+                method: 'DELETE'
             })
 
             if (res.ok) {
-                fetchInvoices()
+                fetchInvoices() // Refresh list
+                if (selectedInvoice && selectedInvoice.id === invoiceId) {
+                    setSelectedInvoice(null) // Deselect if deleted
+                }
             } else {
-                alert('Error settling invoice')
+                const errorData = await res.json()
+                alert(errorData.message || 'Error deleting invoice')
             }
         } catch (err) {
-            console.error('Error settling invoice:', err)
+            console.error('Error deleting invoice:', err)
+            alert('Error deleting invoice')
         }
     }
 
@@ -381,6 +452,48 @@ export default function InvoiceTab({ incidentId, incident }) {
         setFeeModalType(type)
         setFeeToEdit(fee)
         setIsFeeModalOpen(true)
+    }
+
+    const handleCreateContact = (name) => {
+        setPendingContactName(name)
+        setIsAddContactModalOpen(true)
+    }
+
+    const handleContactSaved = (newContact) => {
+        setContacts(prev => [...prev, newContact])
+    }
+
+    const handleDeleteContact = async (contactId) => {
+        if (!window.confirm('Are you sure you want to delete this contact?')) return
+
+        try {
+            const res = await fetch(`http://localhost:5000/api/options/contacts/${contactId}`, {
+                method: 'DELETE'
+            })
+
+            if (res.ok) {
+                fetchContacts()
+                // Clear selection if deleted
+                if (invoiceForm.club_contact_id === contactId) {
+                    setInvoiceForm(prev => ({ ...prev, club_contact_id: '' }))
+                }
+                if (invoiceForm.office_contact_id === contactId) {
+                    setInvoiceForm(prev => ({ ...prev, office_contact_id: '' }))
+                }
+            } else {
+                const errorData = await res.json()
+                if (errorData.error === 'Cannot delete contact') {
+                    const contact = contacts.find(c => c.id === contactId)
+                    setContactToDelete(contact)
+                    setIsReassignContactModalOpen(true)
+                } else {
+                    alert(errorData.message || 'Error deleting contact')
+                }
+            }
+        } catch (err) {
+            console.error('Error deleting contact:', err)
+            alert('Error deleting contact: ' + err.message)
+        }
     }
 
     const handleEditContact = (contactId) => {
@@ -475,25 +588,19 @@ export default function InvoiceTab({ incidentId, incident }) {
                                             {(inv.invoice_total || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <input
-                                                type="text"
+                                            <DateInput
                                                 placeholder=""
-                                                onFocus={(e) => (e.target.type = "date")}
-                                                onBlur={(e) => (e.target.type = e.target.value ? "date" : "text")}
-                                                className="px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500 min-w-[100px]"
-                                                value={inv.settlement_date ? inv.settlement_date.split('T')[0] : ''}
+                                                className="px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500 w-[120px] h-8"
+                                                value={inv.settlement_date}
                                                 onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => handleSettlementDateChange(e, inv.id)}
                                             />
                                         </td>
                                         <td className="px-4 py-3">
-                                            <input
-                                                type="text"
+                                            <DateInput
                                                 placeholder=""
-                                                onFocus={(e) => (e.target.type = "date")}
-                                                onBlur={(e) => (e.target.type = e.target.value ? "date" : "text")}
-                                                className={`px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500 min-w-[100px] ${inv.settlement_date ? 'line-through text-slate-400 bg-slate-50' : ''}`}
-                                                value={inv.next_chasing_date ? inv.next_chasing_date.split('T')[0] : ''}
+                                                className={`px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500 w-[120px] h-8 ${inv.settlement_date ? 'line-through text-slate-400 bg-slate-50' : ''}`}
+                                                value={inv.next_chasing_date}
                                                 onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => handleChasingDateChange(e, inv.id)}
                                                 disabled={!!inv.settlement_date}
@@ -516,12 +623,13 @@ export default function InvoiceTab({ incidentId, incident }) {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-right flex justify-end gap-2">
-                                            {!inv.settlement_date && inv.invoice_number && (
+                                            {!inv.invoice_number && (
                                                 <button
-                                                    onClick={(e) => handleMarkSettled(e, inv.id)}
-                                                    className="text-green-600 hover:underline text-xs border border-green-200 bg-green-50 px-2 py-1 rounded"
+                                                    onClick={(e) => handleDeleteInvoice(e, inv.id)}
+                                                    className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                                                    title="Delete Invoice"
                                                 >
-                                                    Mark Settled
+                                                    <Trash2 className="h-4 w-4" />
                                                 </button>
                                             )}
                                             <button className="text-blue-600 hover:underline">View</button>
@@ -697,6 +805,9 @@ export default function InvoiceTab({ incidentId, incident }) {
                                     onChange={(val) => setInvoiceForm({ ...invoiceForm, club_contact_id: val })}
                                     placeholder="Select Contact..."
                                     labelKey="name"
+                                    allowCreate={true}
+                                    onCreateNew={handleCreateContact}
+                                    onDelete={handleDeleteContact}
                                 />
                                 <div className="flex justify-between items-start mt-1">
                                     <span className="text-xs text-slate-500">
@@ -731,6 +842,9 @@ export default function InvoiceTab({ incidentId, incident }) {
                                     onChange={(val) => setInvoiceForm({ ...invoiceForm, office_contact_id: val })}
                                     placeholder="Select Contact..."
                                     labelKey="name"
+                                    allowCreate={true}
+                                    onCreateNew={handleCreateContact}
+                                    onDelete={handleDeleteContact}
                                 />
                                 <div className="flex justify-between items-start mt-1">
                                     <span className="text-xs text-slate-500">
@@ -1030,6 +1144,13 @@ export default function InvoiceTab({ incidentId, incident }) {
                 onSaved={fetchContacts}
                 onDeleted={handleContactDeleted}
                 onDeleteError={handleContactDeleteError}
+            />
+
+            <AddContactModal
+                isOpen={isAddContactModalOpen}
+                onClose={() => setIsAddContactModalOpen(false)}
+                onSave={handleContactSaved}
+                initialName={pendingContactName}
             />
 
             <ReassignContactModal

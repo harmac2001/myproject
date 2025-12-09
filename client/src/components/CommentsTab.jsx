@@ -1,10 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Save, Ban, Edit2, Trash2, Plus, Bold, Italic, List } from 'lucide-react'
 
-export default function CommentsTab({ incidentId }) {
+export default function CommentsTab({ incidentId, isEditing: parentIsEditing }) {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
+
+    // Sync with parent edit state
+    useEffect(() => {
+        if (parentIsEditing !== undefined) {
+            setIsEditing(parentIsEditing)
+        }
+    }, [parentIsEditing])
+
     const [comments, setComments] = useState([])
     const [originalComments, setOriginalComments] = useState([])
 

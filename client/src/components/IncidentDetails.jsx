@@ -209,7 +209,9 @@ export default function IncidentDetails() {
                         local_agent_id: data.local_agent_id || '',
                         place_id: data.place_id || '',
                         owner_id: data.owner_id || '',
-                        reference_year: data.reference_year || ''
+                        reference_year: data.reference_year || '',
+                        created_date: data.created_date,
+                        last_modified_date: data.last_modified_date
                     })
                     setFormattedReference(data.formatted_reference || '')
                     setLoading(false)
@@ -875,6 +877,18 @@ export default function IncidentDetails() {
                         </div>
                     ))}
                 </div>
+
+                {/* Dates - Right Aligned */}
+                {(formData.created_date || formData.last_modified_date) && (
+                    <div className="text-xs text-slate-500 ml-4 flex flex-col items-end justify-center min-w-fit">
+                        {formData.created_date && (
+                            <span>Created: {new Date(parseInt(formData.created_date)).toLocaleDateString()}</span>
+                        )}
+                        {formData.last_modified_date && (
+                            <span>Updated: {new Date(parseInt(formData.last_modified_date)).toLocaleDateString()}</span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Content */}
@@ -1017,6 +1031,7 @@ export default function IncidentDetails() {
                                     onCreateNew={handleCreateMember}
                                     onEdit={handleEditMember}
                                     onDelete={handleDeleteMember}
+                                    disablePaste={true}
                                 />
                             </div>
                             <div className="col-span-6">
@@ -1032,6 +1047,7 @@ export default function IncidentDetails() {
                                     onCreateNew={handleCreateManager}
                                     onEdit={handleEditMember}
                                     onDelete={(id) => handleDeleteMember(id, true)}
+                                    disablePaste={true}
                                 />
                             </div>
 
@@ -1138,7 +1154,7 @@ export default function IncidentDetails() {
 
                         {/* Action Buttons */}
                         <div className="mt-6 flex gap-2">
-                            {console.log('Button render:', { isEditing, isNew, id })}
+                            {console.log('Button render:', { isEditing, isNew: !id })}
                             {isEditing ? (
                                 <>
                                     <button
@@ -1151,7 +1167,7 @@ export default function IncidentDetails() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            if (isNew) {
+                                            if (!id) {
                                                 navigate(-1)
                                             } else {
                                                 setIsEditing(false)
@@ -1163,7 +1179,7 @@ export default function IncidentDetails() {
                                     </button>
                                 </>
                             ) : (
-                                !isNew && (
+                                id && (
                                     <button
                                         onClick={() => setIsEditing(true)}
                                         className="bg-[#0078d4] text-white px-8 py-2 rounded-md text-sm font-medium hover:bg-[#006cbd] flex items-center gap-2"
@@ -1177,15 +1193,15 @@ export default function IncidentDetails() {
                 )}
 
                 {activeTab === 'cargo' && (
-                    <CargoInformation incidentId={id} />
+                    <CargoInformation incidentId={id} isEditing={isEditing} />
                 )}
 
                 {activeTab === 'claim' && (
-                    <ClaimDetails incidentId={id} />
+                    <ClaimDetails incidentId={id} isEditing={isEditing} />
                 )}
 
                 {activeTab === 'comments' && (
-                    <CommentsTab incidentId={id} />
+                    <CommentsTab incidentId={id} isEditing={isEditing} />
                 )}
 
                 {activeTab === 'appointments' && (
