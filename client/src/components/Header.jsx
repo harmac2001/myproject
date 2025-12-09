@@ -1,5 +1,5 @@
 import React from 'react'
-import leftIcon from '../assets/left_icon.jpg'
+import headerLogo from '../assets/header_logo.png'
 
 export default function Header() {
     return (
@@ -7,11 +7,11 @@ export default function Header() {
             {/* Main Header Content - Dark Blue Background */}
             <div className="bg-[#344e6e] px-6 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    {/* Logo - Reduced size */}
+                    {/* Logo - Adjusted size (120% of original, -20% from previous) */}
                     <img
-                        src={leftIcon}
+                        src={headerLogo}
                         alt="Proinde"
-                        className="h-[32px] grayscale invert brightness-200 mix-blend-screen"
+                        className="h-[38px] grayscale brightness-200 mix-blend-screen"
                     />
                 </div>
                 {/* Title - Optional, keeping it if needed or removing if image replaces it completely. 

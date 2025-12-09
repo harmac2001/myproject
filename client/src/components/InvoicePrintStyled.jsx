@@ -48,10 +48,50 @@ export default function InvoicePrintStyled() {
 
     useEffect(() => {
         if (!loading && invoice && incident) {
+            // Set document title for printing (Proposed Filename)
+            // Format: [Folder Name] - invoice
+            // Folder Name logic: [Ref Part][Ref Part][Ref Part] - [Vessel Name]
+            // We can approximate this from existing data or reconstruction.
+            // The backend does: refPart + " - " + sanitizedVessel
+
+            const formattedRef = incident.formatted_reference || '';
+            let refPart = formattedRef.replace(/\//g, '');
+            const parts = formattedRef.split('/');
+            if (parts.length >= 3) {
+                // Example: 066/25/GD -> 06625GD
+                refPart = parts[0] + parts[1] + parts[2];
+            }
+
+            const vesselName = incident.ship_name || incident.vessel_name || 'Unknown Vessel';
+            const sanitizedVessel = vesselName.replace(/[\\\\/:*?\"<>|]/g, '').trim();
+            const folderName = `${refPart} ${sanitizedVessel}`;
+
+            document.title = `${folderName} - invoice`;
+
+            // Try setting parent title as well since we might be in an iframe
+            let originalParentTitle = '';
+            try {
+                if (window.parent && window.parent.document) {
+                    originalParentTitle = window.parent.document.title;
+                    window.parent.document.title = `${folderName} - invoice`;
+                }
+            } catch (e) {
+                console.warn('Could not set parent title', e);
+            }
+
             const timer = setTimeout(() => {
                 window.print()
             }, 1000)
-            return () => clearTimeout(timer)
+            return () => {
+                clearTimeout(timer);
+                document.title = 'Proinde'; // Restore title
+                // Restore parent title
+                try {
+                    if (window.parent && window.parent.document && originalParentTitle) {
+                        window.parent.document.title = originalParentTitle;
+                    }
+                } catch (e) { }
+            }
         }
     }, [loading, invoice, incident])
 
