@@ -15,7 +15,8 @@ import EditAgentModal from './EditAgentModal'
 import ReassignMemberModal from './ReassignMemberModal'
 import ReassignAgentModal from './ReassignAgentModal'
 import ExpensesTab from './ExpensesTab'
-import InvoiceTab from './InvoiceTab'
+import InvoiceTab from './InvoiceTab';
+import DocumentsTab from './DocumentsTab';
 import Header from './Header'
 
 export default function IncidentDetails() {
@@ -30,7 +31,7 @@ export default function IncidentDetails() {
     const [saving, setSaving] = useState(false)
     const [formattedReference, setFormattedReference] = useState('')
     const [activeTab, setActiveTab] = useState('details')
-    const [openTabs, setOpenTabs] = useState(isNew ? ['details'] : ['details', 'expenses', 'invoice'])
+    const [openTabs, setOpenTabs] = useState(isNew ? ['details'] : ['details', 'expenses', 'invoice', 'documents'])
     const [hasCargo, setHasCargo] = useState(false)
     const [hasClaim, setHasClaim] = useState(false)
     const [hasComments, setHasComments] = useState(false)
@@ -211,7 +212,8 @@ export default function IncidentDetails() {
                         owner_id: data.owner_id || '',
                         reference_year: data.reference_year || '',
                         created_date: data.created_date,
-                        last_modified_date: data.last_modified_date
+                        last_modified_date: data.last_modified_date,
+                        club_code: data.club_code || ''
                     })
                     setFormattedReference(data.formatted_reference || '')
                     setLoading(false)
@@ -811,7 +813,7 @@ export default function IncidentDetails() {
                         <Plus className="h-4 w-4" /> Appointment
                     </button>
                 )}
-                {!openTabs.includes('invoice') && (
+                {!openTabs.includes('invoice') && !isNew && (
                     <button
                         onClick={() => {
                             if (!openTabs.includes('invoice')) {
@@ -856,7 +858,7 @@ export default function IncidentDetails() {
                 {/* Tabs */}
                 <div className="flex gap-1 flex-1">
                     {openTabs.filter(tab => tab !== 'expenses' || !isNew).sort((a, b) => {
-                        const order = ['details', 'expenses', 'invoice', 'cargo', 'claim', 'comments', 'appointments'];
+                        const order = ['details', 'expenses', 'invoice', 'cargo', 'claim', 'comments', 'appointments', 'documents'];
                         return order.indexOf(a) - order.indexOf(b);
                     }).map(tab => (
                         <div key={tab} className="relative">
@@ -864,9 +866,9 @@ export default function IncidentDetails() {
                                 className={`px-4 py-2 text-sm font-medium rounded-t-md ${activeTab === tab ? 'bg-[#0078d4] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                 onClick={() => setActiveTab(tab)}
                             >
-                                {tab === 'details' ? 'Details' : tab === 'expenses' ? 'Expenses' : tab === 'invoice' ? 'Invoice' : tab === 'cargo' ? 'Cargo Information' : tab === 'claim' ? 'Claim Details' : tab === 'comments' ? 'Comments' : tab === 'appointments' ? 'Appointments' : tab}
+                                {tab === 'details' ? 'Details' : tab === 'expenses' ? 'Expenses' : tab === 'invoice' ? 'Invoice' : tab === 'cargo' ? 'Cargo Information' : tab === 'claim' ? 'Claim Details' : tab === 'comments' ? 'Comments' : tab === 'appointments' ? 'Appointments' : tab === 'documents' ? 'Documents' : tab}
                             </button>
-                            {tab !== 'details' && tab !== 'expenses' && tab !== 'invoice' && (
+                            {tab !== 'details' && tab !== 'expenses' && tab !== 'invoice' && tab !== 'documents' && (
                                 <button
                                     onClick={() => handleCloseTab(tab)}
                                     className={`absolute -right-1 -top-1 rounded-full p-0.5 ${activeTab === tab ? 'bg-white text-[#0078d4]' : 'bg-slate-300 text-slate-600'} hover:bg-red-500 hover:text-white`}
@@ -1214,6 +1216,10 @@ export default function IncidentDetails() {
 
                 {activeTab === 'invoice' && (
                     <InvoiceTab incidentId={id} incident={formData} />
+                )}
+
+                {activeTab === 'documents' && (
+                    <DocumentsTab incidentId={id} />
                 )}
             </div>
 

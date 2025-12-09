@@ -176,3 +176,74 @@ Stack: RequestError: There are more columns in the INSERT statement than values 
 [GET /] Params: {"search":"siir","office":"4,2,3,5,1","page":"1","limit":"20"}
 [GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
 [GET /] Params: {"search":"siirt","office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"search":"siirt","office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"search":"siirt","office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"page":"1","limit":"20"}
+[GET /] Params: {"page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"search":"closed","office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"search":"closed","office":"4,2,3,5,1","page":"9","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"10","limit":"20"}
+Creating new incident. Next Ref: 663
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"11","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+Error fetching incident 49666: Failed to connect to 34.151.220.93:1433 in 15000ms
+Stack: ConnectionError: Failed to connect to 34.151.220.93:1433 in 15000ms
+    at C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\mssql\lib\tedious\connection-pool.js:85:17
+    at Connection.onConnect (C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\tedious\lib\connection.js:1012:9)
+    at Object.onceWrapper (node:events:623:26)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\tedious\lib\connection.js:1040:18)
+    at Connection.connectTimeout (C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\tedious\lib\connection.js:1254:10)
+    at Timeout._onTimeout (C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\tedious\lib\connection.js:1199:12)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+Error fetching incident 49666: Failed to connect to 34.151.220.93:1433 in 15000ms
+Stack: ConnectionError: Failed to connect to 34.151.220.93:1433 in 15000ms
+    at C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\mssql\lib\tedious\connection-pool.js:85:17
+    at Connection.onConnect (C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\tedious\lib\connection.js:1012:9)
+    at Object.onceWrapper (node:events:623:26)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\tedious\lib\connection.js:1040:18)
+    at Connection.connectTimeout (C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\tedious\lib\connection.js:1254:10)
+    at Timeout._onTimeout (C:\Users\RogerioAMartins\.gemini\antigravity\scratch\NewProject.PIM\server\node_modules\tedious\lib\connection.js:1199:12)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+Creating new incident. Next Ref: 664
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+Creating new incident. Next Ref: 665
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+Creating new incident. Next Ref: 666
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"11","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"14","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"search":"5063","office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"search":"506/25","office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"11","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"14","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"17","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"1","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"11","limit":"20"}
+[GET /] Params: {"office":"4,2,3,5,1","page":"15","limit":"20"}

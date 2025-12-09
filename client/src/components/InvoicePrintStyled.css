@@ -476,3 +476,9 @@
     height: 20px;
     /* Space between sections */
 }
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}

@@ -46,6 +46,19 @@ export default function InvoicePrintStyled() {
         }
     }
 
+    useEffect(() => {
+        if (!loading && invoice && incident) {
+            const timer = setTimeout(() => {
+                window.print()
+            }, 1000)
+            return () => clearTimeout(timer)
+        }
+    }, [loading, invoice, incident])
+
+    const handlePrint = () => {
+        window.print()
+    }
+
     if (loading) return <div className="p-8">Loading...</div>
     if (error) return <div className="p-8 text-red-600">Error: {error}</div>
     if (!invoice || !incident) return <div className="p-8">Invoice not found</div>
@@ -82,6 +95,22 @@ export default function InvoicePrintStyled() {
 
     return (
         <div className="styled-invoice-print">
+            <div className="no-print" style={{ textAlign: 'right', marginBottom: '10px', padding: '10px' }}>
+                <button
+                    onClick={handlePrint}
+                    style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#000080',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    Print Invoice
+                </button>
+            </div>
             <table cellPadding="0" cellSpacing="0" border="0" width="100%">
                 <tbody>
                     <tr>
@@ -401,7 +430,7 @@ export default function InvoicePrintStyled() {
                                         <tr>
                                             <td width="210" />
                                             <td width="100" />
-                                            <td width="230" className="labelmediumboldxx">Total Fees:&nbsp;</td>
+                                            <td width="230" className="labelmediumboldxx">Total Fees &nbsp;</td>
                                             <td width="110" align="right" className="labelsmall">{totalCorrespondent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                         </tr>
                                     )}
@@ -411,7 +440,7 @@ export default function InvoicePrintStyled() {
                                         <tr>
                                             <td width="210" />
                                             <td width="100" />
-                                            <td width="230" className="labelmediumboldxx">Total Third Party Fees:&nbsp;</td>
+                                            <td width="230" className="labelmediumboldxx">Total Third Party Fees &nbsp;</td>
                                             <td width="110" align="right" className="labelsmall">{totalThirdParty.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                         </tr>
                                     )}
@@ -420,7 +449,7 @@ export default function InvoicePrintStyled() {
                                         <tr>
                                             <td width="210" />
                                             <td width="100" />
-                                            <td width="230" className="labelmediumboldxx">Total Disbursements:&nbsp;</td>
+                                            <td width="230" className="labelmediumboldxx">Total Disbursements &nbsp;</td>
                                             <td width="110" align="right" className="labelsmall">{disbTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                         </tr>
                                     )}
@@ -429,8 +458,8 @@ export default function InvoicePrintStyled() {
                                     <tr>
                                         <td width="210" />
                                         <td width="100" />
-                                        <td width="230" className="labelmediumbold">Amount Payable:&nbsp;</td>
-                                        <td width="110" className="fieldlarge2">USD : {total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                        <td width="230" className="labelmediumbold">Amount Payable &nbsp;</td>
+                                        <td width="110" className="fieldlarge2">USD {total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -479,14 +508,14 @@ export default function InvoicePrintStyled() {
                                             <tr>
                                                 <td align="center" className="labelsmall">{formatDate(fee.fee_date)}</td>
                                                 <td align="left" className="labelsmall">{fee.contractor_name}</td>
-                                                <td align="left" className="labelsmall">Rate (hourly)</td>
+                                                <td align="left" className="labelsmall">{fee.unit || 'Fixed'}</td>
                                                 <td align="right" className="labelsmall">{(fee.cost || 0).toFixed(2)}</td>
                                                 <td align="right" className="labelsmall">{(fee.quantity || 0).toFixed(2)}</td>
                                                 <td align="right" className="labelsmall">{((fee.cost || 0) * (fee.quantity || 0)).toFixed(2)}</td>
                                             </tr>
                                             <tr>
                                                 <td />
-                                                <td colSpan="4" className="labelsmall">{fee.description}</td>
+                                                <td colSpan="4" className="labelsmall">{fee.work_performed}</td>
                                             </tr>
                                         </React.Fragment>
                                     ))}
@@ -494,8 +523,8 @@ export default function InvoicePrintStyled() {
                                     {totalCorrespondent > 0 && (
                                         <tr>
                                             <td colSpan="2" />
-                                            <td colSpan="3" className="labelmediumbold">Total Fees:&nbsp;</td>
-                                            <td className="fieldlarge2">USD : {totalCorrespondent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                            <td colSpan="3" className="labelmediumbold">Total Fees &nbsp;</td>
+                                            <td className="fieldlarge2">USD {totalCorrespondent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                         </tr>
                                     )}
                                     <tr>
@@ -505,99 +534,73 @@ export default function InvoicePrintStyled() {
                             </table>
 
                             {/* Third Party Fees Section */}
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="headingnew1" />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="headingnew">Payments to Third-Party</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="headingnew1" />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td width="100" className="labelmediumbold111">Date</td>
-                                        <td width="200" className="labelmediumbold333">Service Provider</td>
-                                        <td width="110" className="labelmediumbold333">Work Performed</td>
-                                        <td width="70" className="labelmediumbold222">Cost</td>
-                                        <td width="70" className="labelmediumbold222">Quantity</td>
-                                        <td width="110" className="labelmediumbold222">Total</td>
-                                    </tr>
-                                    {thirdPartyFees.map((fee, index) => (
-                                        <React.Fragment key={index}>
+                            {totalThirdParty > 0 && (
+                                <>
+                                    <table width="100%">
+                                        <tbody>
                                             <tr>
-                                                <td align="center" className="labelsmall">{formatDate(fee.fee_date)}</td>
-                                                <td align="left" className="labelsmall">{fee.contractor_name || fee.service_provider_name}</td>
-                                                <td align="left" className="labelsmall">{fee.work_performed || 'Fixed Amount'}</td>
-                                                <td align="right" className="labelsmall">{(fee.cost || 0).toFixed(2)}</td>
-                                                <td align="right" className="labelsmall">{(fee.quantity || 0).toFixed(2)}</td>
-                                                <td align="right" className="labelsmall">{((fee.cost || 0) * (fee.quantity || 0)).toFixed(2)}</td>
+                                                <td className="headingnew1" />
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td className="headingnew">Payments to Third-Party</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td className="headingnew1" />
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td width="100" className="labelmediumbold111">Date</td>
+                                                <td width="200" className="labelmediumbold333">Service Provider</td>
+                                                <td width="110" className="labelmediumbold333">Work Performed</td>
+                                                <td width="70" className="labelmediumbold222">Cost</td>
+                                                <td width="70" className="labelmediumbold222">Quantity</td>
+                                                <td width="110" className="labelmediumbold222">Total</td>
+                                            </tr>
+                                            {thirdPartyFees.map((fee, index) => (
+                                                <React.Fragment key={index}>
+                                                    <tr>
+                                                        <td align="center" className="labelsmall">{formatDate(fee.fee_date)}</td>
+                                                        <td align="left" className="labelsmall">{fee.contractor_name || fee.service_provider_name}</td>
+                                                        <td align="left" className="labelsmall">{fee.work_performed || 'Fixed Amount'}</td>
+                                                        <td align="right" className="labelsmall">{(fee.cost || 0).toFixed(2)}</td>
+                                                        <td align="right" className="labelsmall">{(fee.quantity || 0).toFixed(2)}</td>
+                                                        <td align="right" className="labelsmall">{((fee.cost || 0) * (fee.quantity || 0)).toFixed(2)}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td />
+                                                        <td colSpan="4" className="labelsmall">{fee.work_performed}</td>
+                                                    </tr>
+                                                </React.Fragment>
+                                            ))}
+                                            <tr>
+                                                <td colSpan="2" />
+                                                <td colSpan="3" className="labelmediumbold">Total Third Party Fees &nbsp;</td>
+                                                <td className="fieldlarge2">USD {totalThirdParty.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                             </tr>
                                             <tr>
                                                 <td />
-                                                <td colSpan="4" className="labelsmall">{fee.description}</td>
                                             </tr>
-                                        </React.Fragment>
-                                    ))}
-                                    {totalThirdParty > 0 && (
-                                        <tr>
-                                            <td colSpan="2" />
-                                            <td colSpan="3" className="labelmediumbold">Total Third Party Fees:&nbsp;</td>
-                                            <td className="fieldlarge2">USD : {totalThirdParty.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                        </tr>
-                                    )}
-                                    <tr>
-                                        <td />
-                                    </tr>
-                                </tbody>
-                            </table>
+                                        </tbody>
+                                    </table>
+                                </>
+                            )}
+
                             <table width="100%">
                                 <tbody>
                                     <tr>
                                         <td className="headingnew1" />
                                     </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td width="100" className="labelmediumbold333">Type</td>
-                                        <td width="440" className="labelmediumbold333">Comments</td>
-                                        <td width="110" className="labelmediumbold222">Gross Amount</td>
-                                    </tr>
-
-                                </tbody>
-                            </table>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <td />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="headingnew1" />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-
                                 </tbody>
                             </table>
                         </td>
@@ -611,102 +614,67 @@ export default function InvoicePrintStyled() {
                     </tr>
                 </tbody>
             </table>
-            <table className="tableborderthick" width="800px" border="0">
-                <tbody>
-                    <tr>
-                        <td>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="headingnew">Disbursements</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="headingnew1" />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td width="100" className="labelmediumbold111">Date</td>
-                                        <td width="200" className="labelmediumbold333">Description</td>
-                                        <td width="110" className="labelmediumbold333">Measure</td>
-                                        <td width="70" className="labelmediumbold222">Cost</td>
-                                        <td width="70" className="labelmediumbold222">Quantity</td>
-                                        <td width="110" className="labelmediumbold222">Fee Amount</td>
-                                    </tr>
-                                    {disbursements.map((disb, index) => (
-                                        <React.Fragment key={index}>
-                                            <tr>
-                                                <td align="center" className="labelsmall">{formatDate(disb.created_date || invoice.invoice_date)}</td>
-                                                <td align="left" className="labelsmall">{disb.type}</td>
-                                                <td align="left" className="labelsmall">Fixed Amount</td>
-                                                <td align="right" className="labelsmall">{(disb.gross_amount || 0).toFixed(2)}</td>
-                                                <td align="right" className="labelsmall">1.00</td>
-                                                <td align="right" className="labelsmall">{(disb.gross_amount || 0).toFixed(2)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td />
-                                                <td colSpan="4" className="labelsmall">{disb.description}</td>
-                                            </tr>
-                                        </React.Fragment>
-                                    ))}
-                                    {disbTotal > 0 && (
+
+            {disbTotal > 0 && (
+                <table className="tableborderthick" width="800px" border="0">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <table width="100%">
+                                    <tbody>
+                                        <tr>
+                                            <td className="headingnew">Disbursements</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table width="100%">
+                                    <tbody>
+                                        <tr>
+                                            <td className="headingnew1" />
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <table width="100%">
+                                    <tbody>
+                                        <tr>
+                                            <td width="100" className="labelmediumbold111">Date</td>
+                                            <td width="200" className="labelmediumbold333">Description</td>
+                                            <td width="110" className="labelmediumbold333">Measure</td>
+                                            <td width="70" className="labelmediumbold222">Cost</td>
+                                            <td width="70" className="labelmediumbold222">Quantity</td>
+                                            <td width="110" className="labelmediumbold222">Fee Amount</td>
+                                        </tr>
+                                        {disbursements.map((disb, index) => (
+                                            <React.Fragment key={index}>
+                                                <tr>
+                                                    <td align="center" className="labelsmall">{formatDate(disb.created_date || invoice.invoice_date)}</td>
+                                                    <td align="left" className="labelsmall">{disb.type_name || disb.type}</td>
+                                                    <td align="left" className="labelsmall">Fixed Amount</td>
+                                                    <td align="right" className="labelsmall">{(disb.gross_amount || 0).toFixed(2)}</td>
+                                                    <td align="right" className="labelsmall">1.00</td>
+                                                    <td align="right" className="labelsmall">{(disb.gross_amount || 0).toFixed(2)}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td />
+                                                    <td colSpan="4" className="labelsmall">{disb.comments || disb.description}</td>
+                                                </tr>
+                                            </React.Fragment>
+                                        ))}
                                         <tr>
                                             <td colSpan="2" />
-                                            <td colSpan="3" className="labelmediumbold">Total Disbursements:&nbsp;</td>
-                                            <td className="fieldlarge2">USD : {disbTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                            <td colSpan="3" className="labelmediumbold">Total Disbursements &nbsp;</td>
+                                            <td className="fieldlarge2">USD {disbTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                         </tr>
-                                    )}
-                                    <tr>
-                                        <td />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="headingnew1" />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td width="100" className="labelmediumbold333">Type</td>
-                                        <td width="440" className="labelmediumbold333">Comments</td>
-                                        <td width="110" className="labelmediumbold222">Gross Amount</td>
-                                    </tr>
-
-                                </tbody>
-                            </table>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <td />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="headingnew1" />
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                        <tr>
+                                            <td />
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            )}
             <table>
                 <tbody>
                     <tr>

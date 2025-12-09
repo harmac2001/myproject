@@ -45,6 +45,19 @@ export default function InvoicePrint() {
         }
     }
 
+    useEffect(() => {
+        if (!loading && invoice && incident) {
+            const timer = setTimeout(() => {
+                window.print()
+            }, 1000)
+            return () => clearTimeout(timer)
+        }
+    }, [loading, invoice, incident])
+
+    const handlePrint = () => {
+        window.print()
+    }
+
     if (loading) return <div className="p-8">Loading...</div>
     if (error) return <div className="p-8 text-red-600">Error: {error}</div>
     if (!invoice || !incident) return <div className="p-8">Invoice not found</div>
@@ -81,6 +94,16 @@ export default function InvoicePrint() {
 
     return (
         <div className="bg-white min-h-screen p-8 max-w-[210mm] mx-auto text-xs font-sans text-black">
+            {/* Print Button */}
+            <div className="mb-4 no-print text-right">
+                <button
+                    onClick={handlePrint}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold"
+                >
+                    Print Invoice
+                </button>
+            </div>
+
             {/* Letterhead */}
             <div className="mb-8">
                 <img
@@ -267,7 +290,6 @@ export default function InvoicePrint() {
                 </div>
             </div>
 
-            {/* Breakdown of Fees */}
             <div className="mb-8 break-before-page">
                 <div className="bg-gray-300 font-bold px-2 py-1 mb-4">Breakdown of Correspondents Fees</div>
                 <h3 className="font-bold mb-2">Fees</h3>
@@ -285,12 +307,12 @@ export default function InvoicePrint() {
                     <tbody className="divide-y divide-gray-200">
                         {fees.map(fee => (
                             <tr key={fee.id}>
-                                <td className="py-2 align-top">-</td>
+                                <td className="py-2 align-top">{formatDate(fee.fee_date)}</td>
                                 <td className="py-2 align-top">
-                                    <div className="font-bold">{fee.type}</div>
-                                    <div className="text-gray-600">{fee.description}</div>
+                                    <div className="font-bold">{fee.contractor_name}</div>
+                                    <div className="text-gray-600">{fee.work_performed}</div>
                                 </td>
-                                <td className="py-2 text-right align-top">Rate (hourly)</td>
+                                <td className="py-2 text-right align-top">{fee.unit || 'rate'}</td>
                                 <td className="py-2 text-right align-top">{fee.cost.toFixed(2)}</td>
                                 <td className="py-2 text-right align-top">{fee.quantity.toFixed(2)}</td>
                                 <td className="py-2 text-right align-top">{(fee.cost * fee.quantity).toFixed(2)}</td>
@@ -321,10 +343,10 @@ export default function InvoicePrint() {
                         <tbody className="divide-y divide-gray-200">
                             {disbursements.map(disb => (
                                 <tr key={disb.id}>
-                                    <td className="py-2 align-top">-</td>
+                                    <td className="py-2 align-top">{formatDate(disb.created_date || invoice.invoice_date)}</td>
                                     <td className="py-2 align-top">
-                                        <div className="font-bold">{disb.type}</div>
-                                        <div className="text-gray-600">{disb.description}</div>
+                                        <div className="font-bold">{disb.type_name || disb.type}</div>
+                                        <div className="text-gray-600">{disb.comments || disb.description}</div>
                                     </td>
                                     <td className="py-2 text-right align-top">{disb.gross_amount.toFixed(2)}</td>
                                 </tr>
@@ -346,6 +368,7 @@ export default function InvoicePrint() {
                     body { -webkit-print-color-adjust: exact; }
                     .break-before-page { page-break-before: always; }
                     .break-inside-avoid { page-break-inside: avoid; }
+                    .no-print { display: none !important; }
                 }
             `}</style>
         </div>

@@ -284,8 +284,25 @@ router.get('/members/:id/incidents', async (req, res) => {
 // Get clubs
 router.get('/clubs', async (req, res) => {
     try {
+        const { code } = req.query;
         const pool = await poolPromise;
-        const result = await pool.request().query('SELECT id, name, code, line1, line2, line3, line4, vat_number FROM club ORDER BY name');
+
+        let query = 'SELECT id, name, code, line1, line2, line3, line4, vat_number FROM club';
+
+        if (code) {
+            query += ' WHERE code = @code';
+        } else {
+            query += ' WHERE incident_club = 1';
+        }
+
+        query += ' ORDER BY name';
+
+        const request = pool.request();
+        if (code) {
+            request.input('code', sql.VarChar, code);
+        }
+
+        const result = await request.query(query);
         res.json(result.recordset);
     } catch (err) {
         res.status(500).send(err.message);

@@ -1,6 +1,69 @@
 const express = require('express');
 const router = express.Router();
 const { sql, poolPromise } = require('../db');
+const { createIncidentFolder, listIncidentFiles } = require('../services/graphService');
+// ... imports ...
+
+// GET incident documents from SharePoint
+router.get('/:id/documents', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // 1. Fetch Incident & Ship & Office Details
+        const incRes = await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                SELECT i.id, i.reference_year, i.local_office_id, i.ship_id,
+                       dbo.get_reference_number(i.id) as formatted_reference,
+                       s.name as vessel_name,
+                       o.sharepoint_site_id, o.sharepoint_drive_id
+                FROM incident i
+                LEFT JOIN ship s ON i.ship_id = s.id
+                LEFT JOIN office o ON i.local_office_id = o.id
+                WHERE i.id = @id
+            `);
+
+        if (incRes.recordset.length === 0) {
+            return res.status(404).send('Incident not found');
+        }
+
+        const inc = incRes.recordset[0];
+
+        if (!inc.sharepoint_site_id || !inc.sharepoint_drive_id) {
+            // If not configured, maybe try defaults or return empty
+            // For now return empty with special flag?
+            return res.json({ files: [], message: 'SharePoint not configured for this office.' });
+        }
+
+        // 2. Reconstruct Folder Name
+        // Logic must match POST: [RefPart] - [SanitizedVessel]
+        const formattedRef = inc.formatted_reference || '';
+        let refPart = formattedRef.replace(/\//g, '');
+        const parts = formattedRef.split('/');
+        if (parts.length >= 3) {
+            refPart = parts[0] + parts[1] + parts[2];
+        }
+
+        let vesselName = inc.vessel_name || 'Unknown Vessel';
+        const sanitizedVessel = vesselName.replace(/[\\/:*?"<>|]/g, '').trim();
+        const folderName = `${refPart} - ${sanitizedVessel}`;
+
+        // 3. List Files
+        const result = await listIncidentFiles(
+            inc.sharepoint_site_id,
+            inc.sharepoint_drive_id,
+            folderName,
+            inc.reference_year
+        );
+
+        res.json({ files: result.files, folderUrl: result.folderUrl });
+
+    } catch (err) {
+        console.error('Error fetching documents:', err.message);
+        res.status(500).send(err.message);
+    }
+});
 
 // GET all incidents with optional search, filter, and pagination
 router.get('/', async (req, res) => {
@@ -250,7 +313,12 @@ router.get('/:id', async (req, res) => {
 
         const result = await pool.request()
             .input('id', sql.Int, id)
-            .query('SELECT *, dbo.get_reference_number(id) as formatted_reference FROM incident WHERE id = @id');
+            .query(`
+                SELECT i.*, dbo.get_reference_number(i.id) as formatted_reference, c.code as club_code
+                FROM incident i
+                LEFT JOIN club c ON i.club_id = c.id
+                WHERE i.id = @id
+            `);
 
         if (result.recordset.length === 0) {
             return res.status(404).send('Incident not found');
@@ -443,6 +511,72 @@ router.post('/', async (req, res) => {
             `);
 
         const newIncidentId = insertResult.recordset[0].id;
+
+        // --- SharePoint Integration ---
+        try {
+            // Get formatted reference for the new incident
+            const refRes = await pool.request()
+                .input('id', sql.Int, newIncidentId)
+                .query('SELECT dbo.get_reference_number(@id) as formatted_reference');
+
+            const formattedRef = refRes.recordset[0]?.formatted_reference || `${next_ref}/${ref_year}`;
+
+            // Get SharePoint config for the office
+            const spConfigRes = await pool.request()
+                .input('officeId', sql.Int, local_office_id)
+                .query('SELECT sharepoint_site_id, sharepoint_drive_id FROM office WHERE id = @officeId');
+
+            if (spConfigRes.recordset.length > 0) {
+                const spConfig = spConfigRes.recordset[0];
+                const siteId = spConfig.sharepoint_site_id || process.env.DEFAULT_SHAREPOINT_SITE_ID;
+                const driveId = spConfig.sharepoint_drive_id || process.env.DEFAULT_SHAREPOINT_DRIVE_ID;
+
+                if (siteId && driveId) {
+                    // Logic: "0286/23/STD/ROAM" -> "028623STD"
+                    // Part 1: Reference
+                    let refPart = formattedRef.replace(/\//g, '');
+                    const parts = formattedRef.split('/');
+                    if (parts.length >= 3) {
+                        refPart = parts[0] + parts[1] + parts[2];
+                    }
+
+                    // Part 2: Vessel Name
+                    let vesselName = 'Unknown Vessel';
+                    try {
+                        const shipRes = await pool.request()
+                            .input('shipId', sql.Int, ship_id)
+                            .query('SELECT name FROM ship WHERE id = @shipId');
+                        if (shipRes.recordset.length > 0) {
+                            vesselName = shipRes.recordset[0].name;
+                        }
+                    } catch (shipErr) {
+                        console.error('[SharePoint] Error fetching ship name:', shipErr);
+                    }
+
+                    // Sanitize Vessel Name (remove invalid chars for folders: \ / : * ? " < > |)
+                    const sanitizedVessel = vesselName.replace(/[\\/:*?"<>|]/g, '').trim();
+
+                    const folderName = `${refPart} - ${sanitizedVessel}`;
+
+                    console.log(`[SharePoint] Creating folder: ${folderName} in Site: ${siteId}`);
+
+                    // Run async, don't block response? 
+                    // To ensure it happens, we await it.
+                    try {
+                        const yearToUse = ref_year; // Use the year collected/generated earlier in the POST route
+                        await createIncidentFolder(siteId, driveId, folderName, yearToUse);
+                        console.log('[SharePoint] Folder created successfully.');
+                    } catch (spErr) {
+                        console.error('[SharePoint] Failed to create folder:', spErr.message);
+                    }
+                } else {
+                    console.log('[SharePoint] Configuration missing for this office. Skipping.');
+                }
+            }
+        } catch (err) {
+            console.error('[SharePoint] Integration error:', err);
+        }
+        // ------------------------------
 
         res.status(201).send({ message: 'Incident created successfully', id: newIncidentId });
     } catch (err) {

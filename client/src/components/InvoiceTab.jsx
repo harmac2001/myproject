@@ -79,14 +79,17 @@ export default function InvoiceTab({ incidentId, incident }) {
     const [contacts, setContacts] = useState([])
     const [clubs, setClubs] = useState([])
 
+    // Print State
+    const [printUrl, setPrintUrl] = useState(null)
+
     useEffect(() => {
         fetchInvoices()
         fetchContacts()
-        fetchClubs()
+        fetchClubs(incident?.club_code)
         if (incident?.local_office_id) {
             fetchBanks()
         }
-    }, [incidentId, incident?.local_office_id])
+    }, [incidentId, incident?.local_office_id, incident?.club_code])
 
     useEffect(() => {
         if (selectedInvoice) {
@@ -147,9 +150,12 @@ export default function InvoiceTab({ incidentId, incident }) {
         }
     }
 
-    const fetchClubs = async () => {
+    const fetchClubs = async (code) => {
         try {
-            const res = await fetch('http://localhost:5000/api/options/clubs')
+            const url = code
+                ? `http://localhost:5000/api/options/clubs?code=${encodeURIComponent(code)}`
+                : 'http://localhost:5000/api/options/clubs'
+            const res = await fetch(url)
             const data = await res.json()
             setClubs(data)
         } catch (err) {
@@ -528,6 +534,15 @@ export default function InvoiceTab({ incidentId, incident }) {
         }
     }
 
+    const handlePrintInvoice = (type) => {
+        // type: 'normal' or 'styled'
+        if (!selectedInvoice) return
+        const url = type === 'styled'
+            ? `/invoice/${selectedInvoice.id}/print-styled?t=${Date.now()}`
+            : `/invoice/${selectedInvoice.id}/print?t=${Date.now()}`
+        setPrintUrl(url)
+    }
+
     // Calculations
     const correspondentFees = fees.filter(f => f.contractor_id)
     const thirdPartyFees = fees.filter(f => f.third_party_contractor_id)
@@ -574,7 +589,10 @@ export default function InvoiceTab({ incidentId, incident }) {
                                 </tr>
                             ) : (
                                 invoices.map(inv => (
-                                    <tr key={inv.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedInvoice(inv)}>
+                                    <tr key={inv.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => {
+                                        setPrintUrl(null)
+                                        setSelectedInvoice(inv)
+                                    }}>
                                         <td className="px-4 py-3 font-medium text-blue-600">
                                             {inv.formatted_invoice_number || 'DRAFT'}
                                         </td>
@@ -647,8 +665,18 @@ export default function InvoiceTab({ incidentId, incident }) {
     // DETAIL VIEW
     return (
         <div className="space-y-6">
+            {/* Hidden Iframe for Printing */}
+            <iframe
+                src={printUrl}
+                style={{ position: 'absolute', width: 0, height: 0, border: 0, visibility: 'hidden' }}
+                title="Print Frame"
+            />
+
             <button
-                onClick={() => setSelectedInvoice(null)}
+                onClick={() => {
+                    setSelectedInvoice(null)
+                    setPrintUrl(null)
+                }}
                 className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
             >
                 <ArrowLeft className="h-4 w-4" /> Back to List
@@ -690,17 +718,13 @@ export default function InvoiceTab({ incidentId, incident }) {
                                     <FileCheck className="h-4 w-4" /> Register
                                 </button>
                             )}
+
                             <button
-                                onClick={() => window.open(`/invoice/${selectedInvoice.id}/print`, '_blank')}
-                                className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 flex items-center gap-2"
+                                onClick={() => handlePrintInvoice('styled')}
+                                disabled={isEditingInvoice}
+                                className={`px-3 py-1.5 text-sm font-medium border rounded-md flex items-center gap-2 ${isEditingInvoice ? 'text-slate-400 bg-slate-50 border-slate-200 cursor-not-allowed' : 'text-slate-700 bg-white border-slate-300 hover:bg-slate-50'}`}
                             >
                                 <Printer className="h-4 w-4" /> Print
-                            </button>
-                            <button
-                                onClick={() => window.open(`/invoice/${selectedInvoice.id}/print-styled`, '_blank')}
-                                className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 flex items-center gap-2"
-                            >
-                                <Printer className="h-4 w-4" /> Print (Styled)
                             </button>
                             {!isEditingInvoice ? (
                                 <button
@@ -731,7 +755,7 @@ export default function InvoiceTab({ incidentId, incident }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                        <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
                             <span className="text-sm text-slate-500">Date</span>
                             {isEditingInvoice ? (
                                 <input
@@ -739,7 +763,7 @@ export default function InvoiceTab({ incidentId, incident }) {
                                     placeholder=""
                                     onFocus={(e) => (e.target.type = "date")}
                                     onBlur={(e) => (e.target.type = e.target.value ? "date" : "text")}
-                                    className="mt-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="px-2 py-1 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={invoiceForm.invoice_date}
                                     onChange={e => setInvoiceForm({ ...invoiceForm, invoice_date: e.target.value })}
                                 />
@@ -747,14 +771,16 @@ export default function InvoiceTab({ incidentId, incident }) {
                                 <span className="font-medium">{selectedInvoice.invoice_date ? new Date(selectedInvoice.invoice_date).toLocaleDateString() : '-'}</span>
                             )}
                         </div>
-                        <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
                             <span className="text-sm text-slate-500">Office</span>
                             <span className="font-medium">{selectedInvoice.office_name || '-'}</span>
                         </div>
-                        <span className="text-sm text-slate-500">IBAN / SWIFT</span>
-                        <span className="font-medium">
-                            {selectedInvoice.iban || '-'} / {selectedInvoice.swift_code || '-'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-slate-500">IBAN / SWIFT</span>
+                            <span className="font-medium">
+                                {selectedInvoice.iban || '-'} / {selectedInvoice.swift_code || '-'}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -896,7 +922,7 @@ export default function InvoiceTab({ incidentId, incident }) {
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Select Club (Auto-populate)</label>
                             <SearchableSelect
-                                options={clubs.filter(c => !selectedInvoice.club_code || c.code === selectedInvoice.club_code)}
+                                options={clubs}
                                 value={invoiceForm.care_of_id}
                                 onChange={handleClubChange}
                                 placeholder="Select Club..."
@@ -929,7 +955,8 @@ export default function InvoiceTab({ incidentId, incident }) {
                     <h3 className="text-lg font-semibold text-slate-800">Breakdown of Correspondent Fees</h3>
                     <button
                         onClick={() => openAddModal('correspondent')}
-                        className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                        disabled={!isEditingInvoice}
+                        className={`px-3 py-1.5 text-sm font-medium text-white rounded-md flex items-center gap-2 ${!isEditingInvoice ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
                         <Plus className="h-4 w-4" /> Add Fee
                     </button>
@@ -1000,7 +1027,8 @@ export default function InvoiceTab({ incidentId, incident }) {
                     <h3 className="text-lg font-semibold text-slate-800">Disbursements</h3>
                     <button
                         onClick={() => setIsDisbursementModalOpen(true)}
-                        className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                        disabled={!isEditingInvoice}
+                        className={`px-3 py-1.5 text-sm font-medium text-white rounded-md flex items-center gap-2 ${!isEditingInvoice ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
                         <Plus className="h-4 w-4" /> Add Disbursement
                     </button>
@@ -1057,9 +1085,10 @@ export default function InvoiceTab({ incidentId, incident }) {
                     <h3 className="text-lg font-semibold text-slate-800">Payments to Third Parties</h3>
                     <button
                         onClick={() => openAddModal('third-party')}
-                        className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                        disabled={!isEditingInvoice}
+                        className={`px-3 py-1.5 text-sm font-medium text-white rounded-md flex items-center gap-2 ${!isEditingInvoice ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
-                        <Plus className="h-4 w-4" /> Add Payment
+                        <Plus className="h-4 w-4" /> Add Payment to Third-Party
                     </button>
                 </div>
                 <div className="overflow-x-auto">
