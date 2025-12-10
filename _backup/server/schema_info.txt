@@ -1,0 +1,38 @@
+--- Incident Columns ---
+id (bigint)
+berthing_date (date)
+closing_date (date)
+club_reference (varchar)
+description (varchar)
+effective_disposal_date (date)
+estimated_disposal_date (date)
+incident_date (date)
+latest_report_date (date)
+next_review_date (date)
+reference_number (int)
+reference_sub_number (smallint)
+reference_year (int)
+reporting_date (date)
+status (varchar)
+time_bar_date (date)
+voyage_and_leg (varchar)
+club_id (bigint)
+handler_id (bigint)
+local_agent_id (bigint)
+local_office_id (bigint)
+member_id (bigint)
+owner_id (bigint)
+place_id (bigint)
+reporter_id (bigint)
+ship_id (bigint)
+type_id (bigint)
+created_by_user (varchar)
+created_date (bigint)
+last_modified_by_user (varchar)
+last_modified_date (bigint)
+
+--- Functions ---
+to_unix_timestamp
+to_datetime
+get_reference_number
+format_number

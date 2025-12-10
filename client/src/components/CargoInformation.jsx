@@ -2,10 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { Save, Edit2 } from 'lucide-react'
 import SearchableSelect from './SearchableSelect'
 import MultiSelect from './MultiSelect'
+import AddTraderModal from './AddTraderModal'
 
 export default function CargoInformation({ incidentId, isEditing: parentIsEditing, onClose }) {
-    const [isEditing, setIsEditing] = useState(true)
+    const [isEditing, setIsEditing] = useState(parentIsEditing)
     const prevParentIsEditing = useRef(parentIsEditing)
+
+    // Trader Modal State
+    const [showTraderModal, setShowTraderModal] = useState(false)
+    const [traderToEdit, setTraderToEdit] = useState(null)
+    const [pendingTraderName, setPendingTraderName] = useState('')
 
     // Sync with parent edit state only when it changes
     useEffect(() => {
@@ -158,16 +164,36 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
         }).filter(Boolean).join(', ')
     }
 
+    // Trader Handlers
+    const handleCreateTrader = (name) => {
+        setPendingTraderName(name)
+        setTraderToEdit(null)
+        setShowTraderModal(true)
+    }
+
+    const handleTraderSaved = (savedTrader) => {
+        // Update traders list
+        setTraders(prev => {
+            const exists = prev.find(t => t.id === savedTrader.id)
+            if (exists) {
+                return prev.map(t => t.id === savedTrader.id ? savedTrader : t)
+            }
+            return [...prev, savedTrader].sort((a, b) => a.name.localeCompare(b.name))
+        })
+        setPendingTraderName('')
+        setShowTraderModal(false)
+    }
+
     return (
         <div className="border border-slate-200 rounded-b-md p-4 bg-white">
             {/* Cargo Form */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <div className={`grid grid-cols-2 gap-4 ${isEditing ? '' : 'opacity-80'}`}>
                 {/* Bills of Lading */}
                 <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">Bills of Lading</label>
                     <input
                         type="text"
-                        className="input-field w-full py-2.5 px-3 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
+                        className={`input-field w-full py-2.5 px-3 border border-slate-300 rounded-md shadow-sm ${!isEditing ? 'bg-white' : 'bg-white'} text-slate-900`}
                         value={formData.bill_of_lading}
                         onChange={(e) => setFormData({ ...formData, bill_of_lading: e.target.value })}
                         disabled={!isEditing}
@@ -179,7 +205,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                     <label className="block text-xs font-bold text-slate-700 mb-1">Containers involved</label>
                     <input
                         type="text"
-                        className="input-field w-full py-2.5 px-3 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
+                        className={`input-field w-full py-2.5 px-3 border border-slate-300 rounded-md shadow-sm ${!isEditing ? 'bg-white' : 'bg-white'} text-slate-900`}
                         value={formData.containers}
                         onChange={(e) => setFormData({ ...formData, containers: e.target.value })}
                         disabled={!isEditing}
@@ -187,24 +213,23 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                 </div>
 
                 {/* Type of Cargo */}
-                <div>
+                <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-700 mb-1">Type of Cargo <span className="text-red-500">*</span></label>
                     <SearchableSelect
                         options={cargoTypes}
                         value={formData.cargo_type_id}
                         onChange={(val) => setFormData({ ...formData, cargo_type_id: val })}
-                        placeholder="Select Type..."
-                        className="w-full"
+                        placeholder="Select Cargo Type..."
                         disabled={!isEditing}
                     />
                 </div>
 
                 {/* Description */}
-                <div>
+                <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-700 mb-1">Description <span className="text-red-500">*</span></label>
                     <input
                         type="text"
-                        className="input-field w-full py-2.5 px-3 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
+                        className={`input-field w-full py-2.5 px-3 border border-slate-300 rounded-md shadow-sm ${!isEditing ? 'bg-white' : 'bg-white'} text-slate-900`}
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         disabled={!isEditing}
@@ -212,7 +237,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                 </div>
 
                 {/* Port of Loading */}
-                <div>
+                <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-700 mb-1">Port of Loading <span className="text-red-500">*</span></label>
                     {isEditing ? (
                         <MultiSelect
@@ -221,11 +246,12 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                             onChange={(val) => setFormData({ ...formData, loading_port_ids: val })}
                             placeholder="Select Ports..."
                             disabled={!isEditing}
+                            labelKey="name"
                         />
                     ) : (
                         <input
                             type="text"
-                            className="input-field w-full py-2.5 px-3 bg-white text-slate-900 border-slate-300"
+                            className="input-field w-full py-2.5 px-3 bg-white text-slate-900 border border-slate-300 rounded-md shadow-sm"
                             value={getDisplayValue(formData.loading_port_ids, ports)}
                             readOnly
                         />
@@ -233,7 +259,7 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                 </div>
 
                 {/* Port of Discharge */}
-                <div>
+                <div className="col-span-1">
                     <label className="block text-xs font-bold text-slate-700 mb-1">Port of Discharge <span className="text-red-500">*</span></label>
                     {isEditing ? (
                         <MultiSelect
@@ -242,11 +268,12 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                             onChange={(val) => setFormData({ ...formData, discharge_port_ids: val })}
                             placeholder="Select Ports..."
                             disabled={!isEditing}
+                            labelKey="name"
                         />
                     ) : (
                         <input
                             type="text"
-                            className="input-field w-full py-2.5 px-3 bg-white text-slate-900 border-slate-300"
+                            className="input-field w-full py-2.5 px-3 bg-white text-slate-900 border border-slate-300 rounded-md shadow-sm"
                             value={getDisplayValue(formData.discharge_port_ids, ports)}
                             readOnly
                         />
@@ -263,11 +290,12 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                             onChange={(val) => setFormData({ ...formData, shipper_ids: val })}
                             placeholder="Select Shippers..."
                             disabled={!isEditing}
+                            onCreateNew={handleCreateTrader}
                         />
                     ) : (
                         <input
                             type="text"
-                            className="input-field w-full py-2.5 px-3 bg-white text-slate-900 border-slate-300"
+                            className="input-field w-full py-2.5 px-3 bg-white text-slate-900 border border-slate-300 rounded-md shadow-sm"
                             value={getDisplayValue(formData.shipper_ids, traders)}
                             readOnly
                         />
@@ -284,11 +312,12 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                             onChange={(val) => setFormData({ ...formData, receiver_ids: val })}
                             placeholder="Select Receivers..."
                             disabled={!isEditing}
+                            onCreateNew={handleCreateTrader}
                         />
                     ) : (
                         <input
                             type="text"
-                            className="input-field w-full py-2.5 px-3 bg-white text-slate-900 border-slate-300"
+                            className="input-field w-full py-2.5 px-3 bg-white text-slate-900 border border-slate-300 rounded-md shadow-sm"
                             value={getDisplayValue(formData.receiver_ids, traders)}
                             readOnly
                         />
@@ -317,6 +346,14 @@ export default function CargoInformation({ incidentId, isEditing: parentIsEditin
                     </button>
                 )}
             </div>
+
+            <AddTraderModal
+                isOpen={showTraderModal}
+                onClose={() => setShowTraderModal(false)}
+                onSave={handleTraderSaved}
+                traderToEdit={traderToEdit}
+                initialName={pendingTraderName}
+            />
         </div>
     )
 }

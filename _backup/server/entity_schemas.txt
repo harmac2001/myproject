@@ -1,0 +1,160 @@
+
+=== SHIP TABLE SCHEMA ===
+[
+  {
+    "COLUMN_NAME": "id",
+    "DATA_TYPE": "bigint",
+    "CHARACTER_MAXIMUM_LENGTH": null,
+    "IS_NULLABLE": "NO"
+  },
+  {
+    "COLUMN_NAME": "name",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 150,
+    "IS_NULLABLE": "NO"
+  }
+]
+
+--- Sample ship record ---
+[
+  {
+    "id": "1",
+    "name": "ABRA "
+  }
+]
+
+=== SERVICE_PROVIDER TABLE SCHEMA ===
+[
+  {
+    "COLUMN_NAME": "is_consultant",
+    "DATA_TYPE": "int",
+    "CHARACTER_MAXIMUM_LENGTH": null,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "id",
+    "DATA_TYPE": "bigint",
+    "CHARACTER_MAXIMUM_LENGTH": null,
+    "IS_NULLABLE": "NO"
+  },
+  {
+    "COLUMN_NAME": "name",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 150,
+    "IS_NULLABLE": "NO"
+  },
+  {
+    "COLUMN_NAME": "friendly_name",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "rate",
+    "DATA_TYPE": "numeric",
+    "CHARACTER_MAXIMUM_LENGTH": null,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "city",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "complement",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "country",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "district",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "location",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "location_number",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "postal_code",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "state_or_region",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "cnpj",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "email",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "mobile",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "phone",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  },
+  {
+    "COLUMN_NAME": "website",
+    "DATA_TYPE": "varchar",
+    "CHARACTER_MAXIMUM_LENGTH": 255,
+    "IS_NULLABLE": "YES"
+  }
+]
+
+--- Sample service_provider record ---
+[
+  {
+    "is_consultant": 0,
+    "id": "3",
+    "name": "ALAMO PERFUMARIA E COSMETICOS LTDA",
+    "friendly_name": null,
+    "rate": null,
+    "city": null,
+    "complement": null,
+    "country": null,
+    "district": null,
+    "location": null,
+    "location_number": null,
+    "postal_code": null,
+    "state_or_region": null,
+    "cnpj": null,
+    "email": null,
+    "mobile": null,
+    "phone": null,
+    "website": null
+  }
+]

@@ -188,7 +188,7 @@ export default function IncidentDetails() {
                     console.log('Incident Data:', data)
                     setFormData({
                         incident_date: formatDate(data.incident_date),
-                        status: data.status ? data.status.toUpperCase() : 'OPEN',
+                        status: data.status ? String(data.status).toUpperCase() : 'OPEN',
                         description: data.description || '',
                         berthing_date: formatDate(data.berthing_date),
                         closing_date: formatDate(data.closing_date),
@@ -217,6 +217,19 @@ export default function IncidentDetails() {
                     })
                     setFormattedReference(data.formatted_reference || '')
                     setLoading(false)
+
+                    // Auto-open Appointments tab if appointments exist
+                    if (data.appointment_count > 0) {
+                        setHasAppointments(true)
+                        setOpenTabs(prev => {
+                            if (!prev.includes('appointments')) {
+                                return [...prev, 'appointments']
+                            }
+                            return prev
+                        })
+                    } else {
+                        setHasAppointments(false)
+                    }
 
                     // Check if cargo exists for this incident
                     fetch(`http://localhost:5000/api/cargo/incident/${id}`)
@@ -370,7 +383,7 @@ export default function IncidentDetails() {
             const response = await fetch('http://localhost:5000/api/options/ships', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
+                body: JSON.stringify({ name: name.toUpperCase() })
             })
             if (response.ok) {
                 const newShip = await response.json()

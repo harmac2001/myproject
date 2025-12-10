@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Save, Edit2, X } from 'lucide-react'
 
-export default function MultiSelect({ options, value = [], onChange, placeholder, disabled, labelKey }) {
+export default function MultiSelect({ options, value = [], onChange, placeholder, disabled, labelKey, onEdit, onDelete, onCreateNew }) {
     const [isOpen, setIsOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const wrapperRef = useRef(null)
@@ -83,20 +83,65 @@ export default function MultiSelect({ options, value = [], onChange, placeholder
                         filteredOptions.map((opt) => (
                             <div
                                 key={opt.id}
-                                className={`cursor-pointer select-none relative py-2 pl-8 pr-4 hover:bg-indigo-50 ${value.includes(opt.id) ? 'bg-indigo-50 text-indigo-600' : 'text-slate-900'}`}
+                                className={`cursor-pointer select-none relative py-2 pl-8 pr-4 hover:bg-indigo-50 ${value.includes(opt.id) ? 'bg-indigo-50 text-indigo-600' : 'text-slate-900'} group flex justify-between items-center`}
                                 onClick={() => toggleOption(opt.id)}
                             >
-                                <input
-                                    type="checkbox"
-                                    checked={value.includes(opt.id)}
-                                    onChange={() => { }}
-                                    className="absolute left-2 top-1/2 -translate-y-1/2"
-                                />
-                                <span className={`block truncate ${value.includes(opt.id) ? 'font-semibold' : 'font-normal'}`}>
-                                    {getLabel(opt)}
-                                </span>
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                    <input
+                                        type="checkbox"
+                                        checked={value.includes(opt.id)}
+                                        onChange={() => { }}
+                                        className="absolute left-2 top-1/2 -translate-y-1/2"
+                                    />
+                                    <span className={`block truncate ${value.includes(opt.id) ? 'font-semibold' : 'font-normal'}`}>
+                                        {getLabel(opt)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                    {onEdit && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onEdit(opt)
+                                            }}
+                                            className="p-1 text-slate-400 hover:text-blue-600 rounded hover:bg-white"
+                                            title="Edit"
+                                        >
+                                            <Edit2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
+                                    {onDelete && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onDelete(opt)
+                                            }}
+                                            className="p-1 text-slate-400 hover:text-red-600 rounded hover:bg-white"
+                                            title="Delete"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         ))
+                    )}
+                    {onCreateNew && searchTerm.trim() && (
+                        <div className="sticky bottom-0 bg-white border-t border-slate-100 p-2">
+                            <button
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded flex items-center gap-2"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onCreateNew(searchTerm)
+                                    setSearchTerm('')
+                                }}
+                            >
+                                <span className="text-lg">+</span> Create "{searchTerm}"
+                            </button>
+                        </div>
                     )}
                 </div>
             )}

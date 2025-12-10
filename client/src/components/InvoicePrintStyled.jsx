@@ -173,7 +173,7 @@ export default function InvoicePrintStyled() {
                     </tr>
                 </tbody>
             </table>
-            <table className="tableborderthick" width="800px" border="0">
+            <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
                 <tbody>
                     <tr>
                         <td>
@@ -341,18 +341,7 @@ export default function InvoicePrintStyled() {
                                         </td>
                                     </tr>
 
-                                    <tr>
-                                        <td colSpan="3">
-                                            <table width="100%" border="0" cellPadding="0" cellSpacing="0">
-                                                <tbody>
-                                                    <tr>
-                                                        <td width="110" className="labelmediumbold">Description:&nbsp;</td>
-                                                        <td className="labelsmall">{invoice.incident_description}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </td>
-                                    </tr>
+
                                 </tbody>
                             </table>
                         </td>
@@ -366,7 +355,41 @@ export default function InvoicePrintStyled() {
                     </tr>
                 </tbody>
             </table>
-            <table className="tableborderthick" width="800px" border="0">
+
+            {/* New Description Block */}
+            <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
+                <tbody>
+                    <tr>
+                        <td>
+                            <table width="100%">
+                                <tbody>
+                                    <tr>
+                                        <td className="headingnew">Description</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <table width="100%">
+                                <tbody>
+                                    <tr>
+                                        <td className="labelsmall" style={{ padding: '10px', whiteSpace: 'pre-wrap' }}>
+                                            {invoice.description || invoice.incident_description}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table>
+                <tbody>
+                    <tr>
+                        <td />
+                    </tr>
+                </tbody>
+            </table>
+            <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
                 <tbody>
                     <tr>
                         <td>
@@ -453,7 +476,7 @@ export default function InvoicePrintStyled() {
                     </tr>
                 </tbody>
             </table>
-            <table className="tableborderthick" width="800px" border="0">
+            <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
                 <tbody>
                     <tr>
                         <td>
@@ -515,7 +538,7 @@ export default function InvoicePrintStyled() {
                     </tr>
                 </tbody>
             </table>
-            <table className="tableborderthick" width="800px" border="0">
+            <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
                 <tbody>
                     <tr>
                         <td>
@@ -655,66 +678,68 @@ export default function InvoicePrintStyled() {
                 </tbody>
             </table>
 
-            {disbTotal > 0 && (
-                <table className="tableborderthick" width="800px" border="0">
-                    <tbody>
-                        <tr>
-                            <td>
-                                <table width="100%">
-                                    <tbody>
-                                        <tr>
-                                            <td className="headingnew">Disbursements</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <table width="100%">
-                                    <tbody>
-                                        <tr>
-                                            <td className="headingnew1" />
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <table width="100%">
-                                    <tbody>
-                                        <tr>
-                                            <td width="100" className="labelmediumbold111">Date</td>
-                                            <td width="200" className="labelmediumbold333">Description</td>
-                                            <td width="110" className="labelmediumbold333">Measure</td>
-                                            <td width="70" className="labelmediumbold222">Cost</td>
-                                            <td width="70" className="labelmediumbold222">Quantity</td>
-                                            <td width="110" className="labelmediumbold222">Fee Amount</td>
-                                        </tr>
-                                        {disbursements.map((disb, index) => (
-                                            <React.Fragment key={index}>
-                                                <tr>
-                                                    <td align="center" className="labelsmall">{formatDate(disb.created_date || invoice.invoice_date)}</td>
-                                                    <td align="left" className="labelsmall">{disb.type_name || disb.type}</td>
-                                                    <td align="left" className="labelsmall">Fixed Amount</td>
-                                                    <td align="right" className="labelsmall">{(disb.gross_amount || 0).toFixed(2)}</td>
-                                                    <td align="right" className="labelsmall">1.00</td>
-                                                    <td align="right" className="labelsmall">{(disb.gross_amount || 0).toFixed(2)}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td />
-                                                    <td colSpan="4" className="labelsmall">{disb.comments || disb.description}</td>
-                                                </tr>
-                                            </React.Fragment>
-                                        ))}
-                                        <tr>
-                                            <td colSpan="2" />
-                                            <td colSpan="3" className="labelmediumbold">Total Disbursements &nbsp;</td>
-                                            <td className="fieldlarge2">USD {disbTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                        </tr>
-                                        <tr>
-                                            <td />
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            )}
+            {
+                disbTotal > 0 && (
+                    <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <table width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td className="headingnew">Disbursements</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td className="headingnew1" />
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table width="100%">
+                                        <tbody>
+                                            <tr>
+                                                <td width="100" className="labelmediumbold111">Date</td>
+                                                <td width="200" className="labelmediumbold333">Description</td>
+                                                <td width="110" className="labelmediumbold333">Measure</td>
+                                                <td width="70" className="labelmediumbold222">Cost</td>
+                                                <td width="70" className="labelmediumbold222">Quantity</td>
+                                                <td width="110" className="labelmediumbold222">Fee Amount</td>
+                                            </tr>
+                                            {disbursements.map((disb, index) => (
+                                                <React.Fragment key={index}>
+                                                    <tr>
+                                                        <td align="center" className="labelsmall">{formatDate(disb.created_date || invoice.invoice_date)}</td>
+                                                        <td align="left" className="labelsmall">{disb.type_name || disb.type}</td>
+                                                        <td align="left" className="labelsmall">Fixed Amount</td>
+                                                        <td align="right" className="labelsmall">{(disb.gross_amount || 0).toFixed(2)}</td>
+                                                        <td align="right" className="labelsmall">1.00</td>
+                                                        <td align="right" className="labelsmall">{(disb.gross_amount || 0).toFixed(2)}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td />
+                                                        <td colSpan="4" className="labelsmall">{disb.comments || disb.description}</td>
+                                                    </tr>
+                                                </React.Fragment>
+                                            ))}
+                                            <tr>
+                                                <td colSpan="2" />
+                                                <td colSpan="3" className="labelmediumbold">Total Disbursements &nbsp;</td>
+                                                <td className="fieldlarge2">USD {disbTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                            </tr>
+                                            <tr>
+                                                <td />
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                )
+            }
             <table>
                 <tbody>
                     <tr>
@@ -722,7 +747,7 @@ export default function InvoicePrintStyled() {
                     </tr>
                 </tbody>
             </table>
-            <table className="tableborderthick" width="800px" border="0">
+            <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
                 <tbody>
                     <tr>
                         <td>

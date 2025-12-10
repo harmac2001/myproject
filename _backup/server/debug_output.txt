@@ -1,0 +1,37 @@
+Connected to SQL Server
+Fetching all members...
+Found 5614 members.
+First member: {
+  id: '2',
+  name: 'A B Maritime Inc.',
+  line1: null,
+  line2: null,
+  line3: null,
+  line4: null,
+  member_id: null,
+  vat_number: null
+}
+Fetching member by ID: 2...
+Single fetch result: {
+  id: '2',
+  name: 'A B Maritime Inc.',
+  line1: null,
+  line2: null,
+  line3: null,
+  line4: null,
+  member_id: null,
+  vat_number: null
+}
+Checking member table schema...
+┌─────────┬──────────────┬───────────┬──────────────────────────┬─────────────┐
+│ (index) │ COLUMN_NAME  │ DATA_TYPE │ CHARACTER_MAXIMUM_LENGTH │ IS_NULLABLE │
+├─────────┼──────────────┼───────────┼──────────────────────────┼─────────────┤
+│ 0       │ 'id'         │ 'bigint'  │ null                     │ 'NO'        │
+│ 1       │ 'name'       │ 'varchar' │ 150                      │ 'NO'        │
+│ 2       │ 'line1'      │ 'varchar' │ 255                      │ 'YES'       │
+│ 3       │ 'line2'      │ 'varchar' │ 255                      │ 'YES'       │
+│ 4       │ 'line3'      │ 'varchar' │ 255                      │ 'YES'       │
+│ 5       │ 'line4'      │ 'varchar' │ 255                      │ 'YES'       │
+│ 6       │ 'member_id'  │ 'bigint'  │ null                     │ 'YES'       │
+│ 7       │ 'vat_number' │ 'varchar' │ 50                       │ 'YES'       │
+└─────────┴──────────────┴───────────┴──────────────────────────┴─────────────┘

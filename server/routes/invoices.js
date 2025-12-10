@@ -249,30 +249,30 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { bank_id, invoice_date, covered_from, covered_to, club_contact_id, office_contact_id, other_information, recipient_details, final_invoice } = req.body;
+        const { covered_from, covered_to, club_contact_id, office_contact_id, other_information, recipient_details, bank_id, description, final_invoice } = req.body;
         const pool = await poolPromise;
 
         const result = await pool.request()
             .input('id', sql.BigInt, id)
             .input('bank_id', sql.BigInt, bank_id)
-            .input('invoice_date', sql.Date, invoice_date)
-            .input('covered_from', sql.Date, covered_from || null)
-            .input('covered_to', sql.Date, covered_to || null)
-            .input('club_contact_id', sql.BigInt, club_contact_id || null)
-            .input('office_contact_id', sql.BigInt, office_contact_id || null)
-            .input('other_information', sql.VarChar, other_information || null)
-            .input('recipient_details', sql.NVarChar, recipient_details || null)
+            .input('covered_from', sql.Date, covered_from)
+            .input('covered_to', sql.Date, covered_to)
+            .input('club_contact_id', sql.BigInt, club_contact_id)
+            .input('office_contact_id', sql.BigInt, office_contact_id)
+            .input('other_information', sql.VarChar, other_information)
+            .input('recipient_details', sql.NVarChar, recipient_details)
+            .input('description', sql.NVarChar(sql.MAX), description)
             .input('final_invoice', sql.Bit, final_invoice ? 1 : 0)
             .query(`
                 UPDATE invoice
                 SET bank_id = @bank_id, 
-                    invoice_date = @invoice_date,
                     covered_from = @covered_from,
                     covered_to = @covered_to,
                     club_contact_id = @club_contact_id,
                     office_contact_id = @office_contact_id,
                     other_information = @other_information,
                     recipient_details = @recipient_details,
+                    description = @description,
                     final_invoice = @final_invoice
                 WHERE id = @id
             `);
@@ -422,6 +422,50 @@ router.post('/fees', async (req, res) => {
     }
 });
 
+// PUT Update Fee
+router.put('/fees/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`[PUT /fees/${id}] Request received`);
+        console.log('[PUT /fees] Body:', JSON.stringify(req.body));
+
+        const { contractor_id, third_party_contractor_id, fee_date, work_performed, quantity, unit, cost } = req.body;
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('contractor_id', sql.BigInt, contractor_id || null)
+            .input('third_party_contractor_id', sql.BigInt, third_party_contractor_id || null)
+            .input('fee_date', sql.Date, fee_date)
+            .input('work_performed', sql.VarChar, work_performed)
+            .input('quantity', sql.Decimal(18, 2), quantity)
+            .input('unit', sql.VarChar, unit)
+            .input('cost', sql.Decimal(18, 2), cost)
+            .input('third_party', sql.Int, third_party_contractor_id ? 1 : 0)
+            .query(`
+                UPDATE fee
+                SET contractor_id = @contractor_id,
+                    third_party_contractor_id = @third_party_contractor_id,
+                    fee_date = @fee_date,
+                    work_performed = @work_performed,
+                    quantity = @quantity,
+                    unit = @unit,
+                    cost = @cost,
+                    third_party = @third_party
+                WHERE id = @id
+            `);
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Fee not found');
+        }
+
+        res.json({ message: 'Fee updated successfully' });
+    } catch (err) {
+        console.error('Error updating fee:', err);
+        res.status(500).send(err.message);
+    }
+});
+
 // DELETE Fee
 router.delete('/fees/:id', async (req, res) => {
     try {
@@ -482,6 +526,37 @@ router.post('/disbursements', async (req, res) => {
         res.status(201).json(result.recordset[0]);
     } catch (err) {
         console.error('Error adding disbursement:', err);
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT Update Disbursement
+router.put('/disbursements/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type_id, comments, amount } = req.body;
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('type_id', sql.BigInt, type_id)
+            .input('comments', sql.VarChar, comments || null)
+            .input('gross_amount', sql.Decimal(18, 2), amount)
+            .query(`
+                UPDATE disbursement
+                SET type_id = @type_id,
+                    comments = @comments,
+                    gross_amount = @gross_amount
+                WHERE id = @id
+            `);
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Disbursement not found');
+        }
+
+        res.json({ message: 'Disbursement updated successfully' });
+    } catch (err) {
+        console.error('Error updating disbursement:', err);
         res.status(500).send(err.message);
     }
 });

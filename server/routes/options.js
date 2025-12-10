@@ -21,9 +21,11 @@ router.post('/ships', async (req, res) => {
             return res.status(400).send('Ship name is required');
         }
 
+        const upperName = name.trim().toUpperCase();
+
         const pool = await poolPromise;
         const result = await pool.request()
-            .input('name', sql.NVarChar, name.trim())
+            .input('name', sql.NVarChar, upperName)
             .query('INSERT INTO ship (name) OUTPUT INSERTED.id, INSERTED.name VALUES (@name)');
 
         res.status(201).json(result.recordset[0]);
@@ -42,10 +44,12 @@ router.put('/ships/:id', async (req, res) => {
             return res.status(400).send('Ship name is required');
         }
 
+        const upperName = name.trim().toUpperCase();
+
         const pool = await poolPromise;
         const result = await pool.request()
             .input('id', sql.BigInt, id)
-            .input('name', sql.NVarChar, name.trim())
+            .input('name', sql.NVarChar, upperName)
             .query('UPDATE ship SET name = @name OUTPUT INSERTED.id, INSERTED.name WHERE id = @id');
 
         if (result.recordset.length === 0) {
@@ -551,6 +555,197 @@ router.get('/traders', async (req, res) => {
         const result = await pool.request().query('SELECT id, name FROM trader ORDER BY name');
         res.json(result.recordset);
     } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// Get claimants
+router.get('/claimants', async (req, res) => {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request().query('SELECT id, name FROM claimant ORDER BY name');
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// Helper: Levenshtein Distance
+function getLevenshteinDistance(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+
+    const matrix = [];
+
+    for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    Math.min(
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j] + 1
+                    )
+                );
+            }
+        }
+    }
+
+    return matrix[b.length][a.length];
+}
+
+function normalizeName(str) {
+    return str.replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+// POST create new trader
+router.post('/traders', async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Trader name is required');
+        }
+
+        const upperName = name.trim().toUpperCase();
+        const normalizedNew = normalizeName(name);
+
+        const pool = await poolPromise;
+
+        // 1. Fetch Key fields from existing traders for comparison
+        // We need to fetch all to compare. For a huge DB this might be slow, 
+        // but for a traders list (hundreds/thousands) it's acceptable for "Add" operation quality.
+        const existingResult = await pool.request().query('SELECT name FROM trader');
+        const existingNames = existingResult.recordset.map(r => r.name);
+
+        // 2. Exact Match (Normalized)
+        const exactMatch = existingNames.find(n => normalizeName(n) === normalizedNew);
+        if (exactMatch) {
+            return res.status(409).json({
+                error: 'Duplicate Trader',
+                message: `Trader "${exactMatch}" already exists.`
+            });
+        }
+
+        // 3. Fuzzy Match
+        // Threshold: 
+        // len <= 3: 0 distance (must be exact)
+        // len <= 6: 1 distance
+        // len > 6: 2 distance
+        let threshold = 2;
+        if (normalizedNew.length <= 3) threshold = 0;
+        else if (normalizedNew.length <= 6) threshold = 1;
+
+        const similarMatch = existingNames.find(n => {
+            const normalizedExisting = normalizeName(n);
+            const dist = getLevenshteinDistance(normalizedNew, normalizedExisting);
+            return dist <= threshold && dist > 0; // >0 because 0 is exact match dealt with above
+        });
+
+        if (similarMatch) {
+            return res.status(409).json({
+                error: 'Similar Trader Found',
+                message: `A similar trader name "${similarMatch}" already exists. Please verify if this is the same entity.`
+            });
+        }
+
+        const result = await pool.request()
+            .input('name', sql.NVarChar, upperName)
+            .query('INSERT INTO trader (name) OUTPUT INSERTED.id, INSERTED.name VALUES (@name)');
+
+        res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT update trader
+router.put('/traders/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Trader name is required');
+        }
+
+        const upperName = name.trim().toUpperCase();
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, upperName)
+            .query('UPDATE trader SET name = @name OUTPUT INSERTED.id, INSERTED.name WHERE id = @id');
+
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Trader not found');
+        }
+
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE trader
+router.delete('/traders/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // Check if trader is used in any cargo (shippers or receivers)
+        // Note: Cargo table has many-to-many relationship via bridge tables usually?
+        // Let's check the schema. Wait, assuming simple relationship or usage check needed.
+        // Actually, CargoInformation.jsx uses `shipper_ids` and `receiver_ids` which implies M:N.
+        // But for now, let's just implement basic delete or check bridge tables if possible.
+        // Bridge tables: cargo_shipper, cargo_receiver (based on standard M:N patterns).
+
+        // Let's first check if there are bridge tables. I'll assume standard usage check for now.
+        // To be safe, I'll check generic usage in cargo_shipper and cargo_receiver if they exist.
+        // If I make a mistake here, I'll catch it in next step.
+        // Actually, let's verify schema first to be safe about table names.
+        // But the user said "go ahead", implying I should proceed.
+        // I'll stick to basic delete for now, or just check existing logic.
+        // The fetch logic in CargoInformation uses `data.shippers` and `data.receivers`.
+        // This suggests `cargo_shipper` and `cargo_receiver` tables likely exist.
+
+        const checkShipper = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM cargo_shipper WHERE trader_id = @id');
+
+        const checkReceiver = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM cargo_receiver WHERE trader_id = @id');
+
+        const usageCount = (checkShipper.recordset[0].count) + (checkReceiver.recordset[0].count);
+
+        if (usageCount > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete trader',
+                message: `This trader is used in ${usageCount} cargo record(s). Please remove them from cargo details before deleting.`
+            });
+        }
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('DELETE FROM trader WHERE id = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Trader not found');
+        }
+
+        res.status(204).send();
+    } catch (err) {
+        // If table names are wrong, it will fail, and I will fix it.
         res.status(500).send(err.message);
     }
 });

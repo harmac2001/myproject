@@ -401,8 +401,8 @@
     color: #ffffff;
     height: 30px;
     padding-left: 10px;
-    border-bottom: #FFD700 2px solid;
-    /* Gold border */
+    border-bottom: #FFF212 2px solid;
+    /* Custom Yellow border */
     background-color: #000080;
     /* Navy Blue background */
 }

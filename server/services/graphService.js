@@ -129,19 +129,23 @@ const createIncidentFolder = async (siteId, driveId, folderName, year) => {
 
 // Function to list files in the incident folder
 // Reconstructs the path based on logic: Year/Foldername
-const listIncidentFiles = async (siteId, driveId, folderName, year) => {
+const listIncidentFiles = async (siteId, driveId, folderName, year, rootFolderPath = '') => {
     try {
         const client = getAuthenticatedClient();
 
         // 1. Construct Path to Folder
-        // Path: /drives/{driveId}/root:/{year}/{folderName}
+        // Path: /drives/{driveId}/root:/{rootFolderPath}/{year}/{folderName}
 
-        let folderEndpoint;
-        if (year) {
-            folderEndpoint = `/drives/${driveId}/root:/${year}/${folderName}`;
-        } else {
-            folderEndpoint = `/drives/${driveId}/root:/${folderName}`;
+        let path = '';
+        if (rootFolderPath) {
+            path += `${rootFolderPath}/`;
         }
+        if (year) {
+            path += `${year}/`;
+        }
+        path += folderName;
+
+        const folderEndpoint = `/drives/${driveId}/root:/${path}`;
 
         console.log(`[GraphService] Fetching folder metadata from: ${folderEndpoint}`);
 

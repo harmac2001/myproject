@@ -1,0 +1,4 @@
+Column Nullability:
+berthing_date: YES
+owner_id: YES
+reporter_id: YES

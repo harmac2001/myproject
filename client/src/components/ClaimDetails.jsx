@@ -23,6 +23,7 @@ export default function ClaimDetails({ incidentId, isEditing: parentIsEditing })
     const [traders, setTraders] = useState([])
     const [serviceProviders, setServiceProviders] = useState([])
     const [currencies, setCurrencies] = useState([])
+    const [claimants, setClaimants] = useState([])
 
     const [formData, setFormData] = useState({
         received_date: '',
@@ -46,18 +47,20 @@ export default function ClaimDetails({ incidentId, isEditing: parentIsEditing })
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const [lt, lc, tr, sp, cur] = await Promise.all([
+                const [lt, lc, tr, sp, cur, cl] = await Promise.all([
                     fetch('http://localhost:5000/api/options/loss_types').then(res => res.json()),
                     fetch('http://localhost:5000/api/options/loss_causes').then(res => res.json()),
                     fetch('http://localhost:5000/api/options/traders').then(res => res.json()),
                     fetch('http://localhost:5000/api/options/service_providers').then(res => res.json()),
-                    fetch('http://localhost:5000/api/options/currencies').then(res => res.json())
+                    fetch('http://localhost:5000/api/options/currencies').then(res => res.json()),
+                    fetch('http://localhost:5000/api/options/claimants').then(res => res.json())
                 ])
                 setLossTypes(lt)
                 setLossCauses(lc)
                 setTraders(tr)
                 setServiceProviders(sp)
                 setCurrencies(cur)
+                setClaimants(cl)
             } catch (err) {
                 console.error('Error fetching options:', err)
             }
@@ -156,8 +159,8 @@ export default function ClaimDetails({ incidentId, isEditing: parentIsEditing })
 
     // Dynamic Options for Claimant
     // If Direct Claimant (Yes) -> Trader
-    // If Direct Claimant (No) -> Service Provider
-    const claimantOptions = formData.directly_claimant ? traders : serviceProviders
+    // If Direct Claimant (No) -> Claimant
+    const claimantOptions = formData.directly_claimant ? traders : claimants
     const claimantLabel = formData.directly_claimant ? 'Claimant' : 'Subrogate Claimant'
 
     if (loading) return <div className="p-4">Loading...</div>

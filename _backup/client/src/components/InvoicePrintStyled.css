@@ -1,0 +1,484 @@
+.styled-invoice-print {
+    margin-top: 0px;
+    font-size: 10pt;
+    margin-left: 0px;
+    color: black;
+    margin-right: 0px;
+    font-family: "Segoe UI", arial, helvetica, sans-serif;
+    background-color: white;
+    /* Ensure white background */
+}
+
+.styled-invoice-print td {
+    margin-top: 0px;
+    font-size: 10pt;
+    margin-left: 0px;
+    color: black;
+    margin-right: 0px;
+}
+
+.styled-invoice-print table {
+    font-size: 10pt;
+}
+
+.styled-invoice-print .subheading {
+    font-size: 12pt;
+    color: olive;
+}
+
+.styled-invoice-print .appname {
+    font-weight: bold;
+    font-size: 24pt;
+    color: #dd0206;
+}
+
+.styled-invoice-print .sysinfo {
+    font-size: 10pt;
+    color: #000000;
+}
+
+.styled-invoice-print .title {
+    font-size: 20pt;
+    color: #e6e6e6;
+}
+
+.styled-invoice-print .abort {
+    padding-left: 10px;
+    color: #c00000;
+}
+
+.styled-invoice-print .important {
+    color: #ff0000;
+}
+
+.styled-invoice-print .error {
+    color: #ff0000;
+}
+
+.styled-invoice-print div.error {
+    color: red;
+}
+
+.styled-invoice-print .info {
+    font-weight: bold;
+    font-size: 10pt;
+    color: green;
+}
+
+.styled-invoice-print .note {
+    font-size: 7pt;
+    color: #666666;
+}
+
+.styled-invoice-print .help {
+    font-size: 10pt;
+    color: #333333;
+}
+
+.styled-invoice-print .reqfld {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #666666;
+}
+
+.styled-invoice-print li {
+    margin-top: 3px;
+    list-style-position: outside;
+    margin-bottom: 3px;
+    vertical-align: middle;
+    list-style-type: square;
+}
+
+.styled-invoice-print h1 {
+    font-weight: normal;
+    font-size: 14pt;
+    color: #000000;
+    line-height: 14pt;
+}
+
+.styled-invoice-print h2 {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #ff0000;
+    line-height: 10pt;
+}
+
+.styled-invoice-print h4 {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #ff0000;
+    line-height: 10pt;
+}
+
+.styled-invoice-print input {
+    font-size: 10pt;
+}
+
+.styled-invoice-print select {
+    font-size: 10pt;
+}
+
+.styled-invoice-print input.button {
+    font-size: 10pt;
+    cursor: hand;
+}
+
+.styled-invoice-print a {
+    background-color: transparent;
+}
+
+.styled-invoice-print td.heading {
+    border-right: #99ccff 1px outset;
+    border-top: #99ccff 1px outset;
+    font-size: 10pt;
+    border-left: #99ccff 1px outset;
+    color: #ffffff;
+    border-bottom: #99ccff 1px outset;
+    height: 22px;
+    background-color: #6699cc;
+    text-align: center;
+}
+
+.styled-invoice-print td.headingsorted {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #ffffff;
+    height: 22px;
+    background-color: #c0c0c0;
+    text-align: center;
+}
+
+.styled-invoice-print td.label {
+    font-weight: bold;
+    color: #333333;
+}
+
+.styled-invoice-print td.field {
+    font-weight: normal;
+    color: #333333;
+}
+
+.styled-invoice-print td.item {
+    font-size: 10pt;
+    color: #000000;
+    border-bottom: #c0c0c0 1px solid;
+    height: 22px;
+    background-color: #ffffff;
+}
+
+.styled-invoice-print td.itemselected {
+    font-size: 10pt;
+    color: #000000;
+    border-bottom: #c0c0c0 1px solid;
+    height: 22px;
+    background-color: #99ccff;
+}
+
+.styled-invoice-print td.duplicate {
+    font-size: 10pt;
+    color: #cc0000;
+    border-bottom: #c0c0c0 1px solid;
+    height: 22px;
+    background-color: #ffffff;
+}
+
+.styled-invoice-print td.action {
+    font-size: 10pt;
+    color: #000000;
+    border-bottom: #c0c0c0 1px solid;
+    height: 22px;
+    background-color: #ffffff;
+    text-align: center;
+}
+
+.styled-invoice-print td.menuhead {
+    font-weight: bold;
+    font-size: 10pt;
+    color: #ffffff;
+    text-indent: 8px;
+    background-color: #000000;
+}
+
+.styled-invoice-print td.menuitem {
+    font-weight: normal;
+    font-size: 10pt;
+    color: #c02b27;
+    text-indent: 20px;
+    background-color: #000000;
+}
+
+.styled-invoice-print a.menuitem:visited,
+.styled-invoice-print a.menuitem:link {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.styled-invoice-print a.menuitem:hover {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff0000;
+    text-decoration: underline;
+}
+
+.styled-invoice-print a:link,
+.styled-invoice-print a:visited {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff0000;
+    text-decoration: underline;
+}
+
+.styled-invoice-print a:hover {
+    font-size: 10pt;
+    cursor: hand;
+    color: #ff1010;
+    text-decoration: underline;
+}
+
+.styled-invoice-print span.button {
+    border-right: #99ccff 2px outset;
+    border-top: #99ccff 2px outset;
+    font-weight: bold;
+    font-size: 10pt;
+    padding-bottom: 3px;
+    border-left: #99ccff 2px outset;
+    width: 100px;
+    color: #ffffff;
+    padding-top: 2px;
+    border-bottom: #99ccff 2px outset;
+    background-color: #6699cc;
+    text-align: center;
+}
+
+.styled-invoice-print td.step {
+    font-size: 14pt;
+    text-align: center;
+}
+
+.styled-invoice-print td.stepon {
+    font-weight: bold;
+    font-size: 14pt;
+    text-align: center;
+}
+
+.styled-invoice-print .bracket {
+    color: blue;
+}
+
+.styled-invoice-print .node {
+    color: #990099;
+}
+
+.styled-invoice-print .value {
+    font-weight: normal;
+}
+
+.styled-invoice-print .tableborder {
+    border-right: #6699cc 1px solid;
+    border-top: #6699cc 1px solid;
+    border-left: #6699cc 1px solid;
+    border-bottom: #6699cc 1px solid;
+}
+
+.styled-invoice-print .tableborderthick {
+    border-right: #000000 0px solid;
+    border-top: #000000 0px solid;
+    border-left: #000000 0px solid;
+    border-bottom: #000000 0px solid;
+}
+
+.styled-invoice-print td.labelsmall {
+    font-size: 10pt;
+    color: black;
+    vertical-align: bottom;
+}
+
+.styled-invoice-print td.labelmedium {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+}
+
+.styled-invoice-print td.labelmediumbold {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+    text-align: right;
+    vertical-align: top;
+}
+
+.styled-invoice-print td.labelmediumboldxx {
+    font-size: 9pt;
+    color: black;
+    text-align: right;
+}
+
+.styled-invoice-print td.labelmediumbold111 {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+    border-bottom: #000000 2px solid;
+    text-align: center;
+}
+
+.styled-invoice-print td.labelmediumbold333 {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+    border-bottom: #000000 2px solid;
+    text-align: left;
+}
+
+.styled-invoice-print td.labelmediumbold222 {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+    border-bottom: #000000 2px solid;
+    text-align: right;
+}
+
+.styled-invoice-print td.labelmediumboldleft {
+    font-weight: bold;
+    font-size: 9pt;
+    color: black;
+    text-align: left;
+}
+
+.styled-invoice-print td.labellarge {
+    font-size: 10pt;
+    color: black;
+}
+
+.styled-invoice-print td.fieldsmall {
+    background: white;
+    height: 15px;
+}
+
+.styled-invoice-print td.fieldmedium {
+    border-right: black thin solid;
+    border-top: black thin solid;
+    font-weight: normal;
+    background: white;
+    border-left: black thin solid;
+    border-bottom: black thin solid;
+    height: 18px;
+    text-align: right;
+}
+
+.styled-invoice-print td.fieldlarge {
+    font-weight: bold;
+    font-size: 10pt;
+    background: white;
+    text-align: right;
+}
+
+.styled-invoice-print td.fieldlarge2 {
+    border-top: black 1px solid;
+    font-weight: bold;
+    font-size: 10pt;
+    background: white;
+    border-bottom: black 1px solid;
+    text-align: right;
+}
+
+.styled-invoice-print td.fieldlarge1 {
+    font-weight: bold;
+    font-size: 10pt;
+    background: #ccc;
+    font-weight: bold;
+    font-size: 10pt;
+    background: #ccc;
+    border: #330033 1px outset;
+    color: black;
+    text-align: center;
+}
+
+.styled-invoice-print td.headingnew {
+    font-weight: bold;
+    font-size: 12pt;
+    color: #ffffff;
+    height: 30px;
+    padding-left: 10px;
+    border-bottom: #FFD700 2px solid;
+    /* Gold border */
+    background-color: #000080;
+    /* Navy Blue background */
+}
+
+.styled-invoice-print td.headingnew5 {
+    font-weight: normal;
+    font-size: 16pt;
+    color: black;
+    height: 30px;
+    background-color: #ffffff;
+    text-align: left;
+}
+
+.styled-invoice-print td.headingnew6 {
+    font-weight: normal;
+    font-size: 14pt;
+    color: black;
+    font-family: arial, helvetica, sans-serif;
+    height: 30px;
+    background-color: #ffffff;
+}
+
+.styled-invoice-print td.headingnew1 {
+    font-weight: bold;
+    font-size: 12pt;
+    color: black;
+    height: 10px;
+    /* Reduced height for spacing */
+}
+
+.styled-invoice-print tr.headercolour {
+    background-color: #000080;
+    /* Navy Blue */
+}
+
+.styled-invoice-print td.headerfont {
+    font-weight: bold;
+    font-size: 10pt;
+    background-color: #000080;
+    /* Navy Blue */
+    color: #ffffff;
+}
+
+.styled-invoice-print td.headerfontsmall {
+    font-weight: lighter;
+    font-size: 10pt;
+    color: #ffffff;
+    background-color: #000080;
+    /* Navy Blue */
+}
+
+/* Updated label colors */
+.styled-invoice-print td.labelmediumbold,
+.styled-invoice-print td.labelmediumbold111,
+.styled-invoice-print td.labelmediumbold333,
+.styled-invoice-print td.labelmediumbold222,
+.styled-invoice-print td.labelmediumboldxx,
+.styled-invoice-print td.labelmediumboldleft {
+    color: #000080;
+    /* Navy Blue */
+}
+
+/* Spacing adjustments */
+.styled-invoice-print td {
+    padding-bottom: 4px;
+    /* Space between rows */
+    padding-top: 2px;
+}
+
+.styled-invoice-print .spacer-section {
+    height: 20px;
+    /* Space between sections */
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}

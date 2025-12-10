@@ -9,6 +9,24 @@ import AddContactModal from './AddContactModal'
 import ReassignContactModal from './ReassignContactModal'
 import AddDisbursementModal from './AddDisbursementModal'
 
+// Helper functions
+const formatDate = (dateString) => {
+    if (!dateString) return '-'
+    try {
+        return new Date(dateString).toLocaleDateString()
+    } catch (e) {
+        return '-'
+    }
+}
+
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+    }).format(amount || 0)
+}
+
 const DateInput = ({ value, onChange, placeholder, className, onClick, disabled }) => {
     const [inputType, setInputType] = useState('text')
 
@@ -71,6 +89,7 @@ export default function InvoiceTab({ incidentId, incident }) {
 
     // Disbursement Modal State
     const [isDisbursementModalOpen, setIsDisbursementModalOpen] = useState(false)
+    const [disbursementToEdit, setDisbursementToEdit] = useState(null)
 
     // Edit Invoice State
     const [isEditingInvoice, setIsEditingInvoice] = useState(false)
@@ -260,8 +279,13 @@ export default function InvoiceTab({ incidentId, incident }) {
 
     const handleUpdateInvoice = async () => {
         // Validation for mandatory fields
-        if (!invoiceForm.covered_from || !invoiceForm.covered_to || !invoiceForm.club_contact_id || !invoiceForm.office_contact_id) {
-            alert('Please fill in all mandatory fields:\n- Covering Period (From & To)\n- Recipient Contact (Club)\n- Origin Contact (Office)')
+        const missingFields = []
+        if (!invoiceForm.covered_from || !invoiceForm.covered_to) missingFields.push('Covering Period (From & To)')
+        if (!invoiceForm.club_contact_id) missingFields.push('Recipient Contact (Club)')
+        if (!invoiceForm.office_contact_id) missingFields.push('Origin Contact (Office)')
+
+        if (missingFields.length > 0) {
+            alert(`Please fill in all mandatory fields:\n- ${missingFields.join('\n- ')}`)
             return
         }
 
@@ -294,8 +318,13 @@ export default function InvoiceTab({ incidentId, incident }) {
         if (!selectedInvoice) return
 
         // Validation for mandatory fields before registering
-        if (!selectedInvoice.covered_from || !selectedInvoice.covered_to || !selectedInvoice.club_contact_id || !selectedInvoice.office_contact_id) {
-            alert('Cannot register invoice. Please fill in all mandatory fields:\n- Covering Period (From & To)\n- Recipient Contact (Club)\n- Origin Contact (Office)')
+        const missingFields = []
+        if (!selectedInvoice.covered_from || !selectedInvoice.covered_to) missingFields.push('Covering Period (From & To)')
+        if (!selectedInvoice.club_contact_id) missingFields.push('Recipient Contact (Club)')
+        if (!selectedInvoice.office_contact_id) missingFields.push('Origin Contact (Office)')
+
+        if (missingFields.length > 0) {
+            alert(`Cannot register invoice. Please fill in all mandatory fields:\n- ${missingFields.join('\n- ')}`)
             return
         }
 
@@ -458,6 +487,16 @@ export default function InvoiceTab({ incidentId, incident }) {
         setFeeModalType(type)
         setFeeToEdit(fee)
         setIsFeeModalOpen(true)
+    }
+
+    const openEditDisbursementModal = (disbursement) => {
+        setDisbursementToEdit(disbursement)
+        setIsDisbursementModalOpen(true)
+    }
+
+    const openAddDisbursementModal = () => {
+        setDisbursementToEdit(null)
+        setIsDisbursementModalOpen(true)
     }
 
     const handleCreateContact = (name) => {
@@ -785,70 +824,35 @@ export default function InvoiceTab({ incidentId, incident }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                <div className="space-y-4">
+            {/* Combined Shadowed Box for Details */}
+            <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="flex flex-col">
                         <span className="text-sm text-slate-500">Covering Period (From) <span className="text-red-500">*</span></span>
                         {isEditingInvoice ? (
                             <input
-                                type={invoiceForm.covered_from ? "date" : "text"}
-                                placeholder=""
-                                onFocus={(e) => (e.target.type = "date")}
-                                onBlur={(e) => (e.target.type = e.target.value ? "date" : "text")}
+                                type="date"
                                 className="mt-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={invoiceForm.covered_from}
+                                value={invoiceForm.covered_from ? invoiceForm.covered_from.split('T')[0] : ''}
                                 onChange={e => setInvoiceForm({ ...invoiceForm, covered_from: e.target.value })}
                             />
                         ) : (
-                            <span className="font-medium">{selectedInvoice.covered_from ? new Date(selectedInvoice.covered_from).toLocaleDateString() : '-'}</span>
+                            <span className="font-medium">{formatDate(selectedInvoice.covered_from)}</span>
                         )}
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm text-slate-500">To <span className="text-red-500">*</span></span>
-                        {isEditingInvoice ? (
-                            <input
-                                type={invoiceForm.covered_to ? "date" : "text"}
-                                placeholder=""
-                                onFocus={(e) => (e.target.type = "date")}
-                                onBlur={(e) => (e.target.type = e.target.value ? "date" : "text")}
-                                className="mt-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={invoiceForm.covered_to}
-                                onChange={e => setInvoiceForm({ ...invoiceForm, covered_to: e.target.value })}
-                            />
-                        ) : (
-                            <span className="font-medium">{selectedInvoice.covered_to ? new Date(selectedInvoice.covered_to).toLocaleDateString() : '-'}</span>
-                        )}
-                    </div>
-                </div>
-                <div className="space-y-4">
                     <div className="flex flex-col">
                         <span className="text-sm text-slate-500">Recipient Contact (Club) <span className="text-red-500">*</span></span>
                         {isEditingInvoice ? (
-                            <>
-                                <SearchableSelect
-                                    options={contacts}
-                                    value={invoiceForm.club_contact_id}
-                                    onChange={(val) => setInvoiceForm({ ...invoiceForm, club_contact_id: val })}
-                                    placeholder="Select Contact..."
-                                    labelKey="name"
-                                    allowCreate={true}
-                                    onCreateNew={handleCreateContact}
-                                    onDelete={handleDeleteContact}
-                                />
-                                <div className="flex justify-between items-start mt-1">
-                                    <span className="text-xs text-slate-500">
-                                        {contacts.find(c => c.id === invoiceForm.club_contact_id)?.email || ''}
-                                    </span>
-                                    {invoiceForm.club_contact_id && (
-                                        <button
-                                            onClick={() => handleEditContact(invoiceForm.club_contact_id)}
-                                            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                                        >
-                                            <Edit2 className="h-3 w-3" /> Edit
-                                        </button>
-                                    )}
-                                </div>
-                            </>
+                            <SearchableSelect
+                                options={contacts}
+                                value={invoiceForm.club_contact_id}
+                                onChange={(val) => setInvoiceForm({ ...invoiceForm, club_contact_id: val })}
+                                placeholder="Select Contact..."
+                                labelKey="name"
+                                allowCreate={true}
+                                onCreateNew={handleCreateContact}
+                                onDelete={handleDeleteContact}
+                            />
                         ) : (
                             <div className="flex flex-col">
                                 <span className="font-medium">{selectedInvoice.club_contact_name || '-'}</span>
@@ -856,6 +860,22 @@ export default function InvoiceTab({ incidentId, incident }) {
                                     <span className="text-sm text-slate-500">{selectedInvoice.club_contact_email}</span>
                                 )}
                             </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="flex flex-col">
+                        <span className="text-sm text-slate-500">To <span className="text-red-500">*</span></span>
+                        {isEditingInvoice ? (
+                            <input
+                                type="date"
+                                className="mt-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={invoiceForm.covered_to ? invoiceForm.covered_to.split('T')[0] : ''}
+                                onChange={e => setInvoiceForm({ ...invoiceForm, covered_to: e.target.value })}
+                            />
+                        ) : (
+                            <span className="font-medium">{formatDate(selectedInvoice.covered_to)}</span>
                         )}
                     </div>
                     <div className="flex flex-col">
@@ -896,23 +916,24 @@ export default function InvoiceTab({ incidentId, incident }) {
                         )}
                     </div>
                 </div>
-            </div>
 
-            <div className="mt-4">
                 <div className="flex flex-col">
-                    <span className="text-sm text-slate-500">Other Information</span>
+                    <span className="text-sm text-slate-500 mb-1">Service Description</span>
                     {isEditingInvoice ? (
-                        <textarea
-                            rows="3"
-                            className="mt-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={invoiceForm.other_information}
-                            onChange={e => setInvoiceForm({ ...invoiceForm, other_information: e.target.value })}
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={invoiceForm.description || ''}
+                            onChange={e => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
+                            placeholder="Enter service description here..."
                         />
                     ) : (
-                        <p className="font-medium text-slate-700 whitespace-pre-wrap">{selectedInvoice.other_information || '-'}</p>
+                        <p className="font-medium text-slate-700 whitespace-pre-wrap">{selectedInvoice.description || '-'}</p>
                     )}
                 </div>
             </div>
+
+
 
 
             <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
@@ -1026,7 +1047,7 @@ export default function InvoiceTab({ incidentId, incident }) {
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-slate-800">Disbursements</h3>
                     <button
-                        onClick={() => setIsDisbursementModalOpen(true)}
+                        onClick={() => openAddDisbursementModal()}
                         disabled={!isEditingInvoice}
                         className={`px-3 py-1.5 text-sm font-medium text-white rounded-md flex items-center gap-2 ${!isEditingInvoice ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
@@ -1057,12 +1078,20 @@ export default function InvoiceTab({ incidentId, incident }) {
                                             {(disb.gross_amount || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <button
-                                                onClick={() => handleDeleteDisbursement(disb.id)}
-                                                className="p-1 text-slate-400 hover:text-red-600"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => openEditDisbursementModal(disb)}
+                                                    className="p-1 text-slate-400 hover:text-blue-600"
+                                                >
+                                                    <Edit2 className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteDisbursement(disb.id)}
+                                                    className="p-1 text-slate-400 hover:text-red-600"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -1151,6 +1180,22 @@ export default function InvoiceTab({ incidentId, incident }) {
                 </div>
             </div >
 
+            <div className="mt-4 mb-4">
+                <div className="flex flex-col">
+                    <span className="text-sm text-slate-500">Other Information</span>
+                    {isEditingInvoice ? (
+                        <textarea
+                            rows="3"
+                            className="mt-1 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={invoiceForm.other_information}
+                            onChange={e => setInvoiceForm({ ...invoiceForm, other_information: e.target.value })}
+                        />
+                    ) : (
+                        <p className="font-medium text-slate-700 whitespace-pre-wrap">{selectedInvoice.other_information || '-'}</p>
+                    )}
+                </div>
+            </div>
+
             {/* Grand Total */}
             < div className="bg-slate-800 text-white p-4 rounded-lg shadow-sm flex justify-between items-center text-lg font-bold" >
                 <span>Amount Payable:</span>
@@ -1194,6 +1239,7 @@ export default function InvoiceTab({ incidentId, incident }) {
                 onClose={() => setIsDisbursementModalOpen(false)}
                 invoiceId={selectedInvoice?.id}
                 onSaved={() => fetchDisbursements(selectedInvoice.id)}
+                disbursementToEdit={disbursementToEdit}
             />
         </div >
     )

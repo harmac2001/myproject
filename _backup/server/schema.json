@@ -1,0 +1,126 @@
+[
+  {
+    "COLUMN_NAME": "id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "berthing_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "closing_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "club_reference",
+    "DATA_TYPE": "varchar"
+  },
+  {
+    "COLUMN_NAME": "description",
+    "DATA_TYPE": "varchar"
+  },
+  {
+    "COLUMN_NAME": "effective_disposal_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "estimated_disposal_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "incident_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "latest_report_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "next_review_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "reference_number",
+    "DATA_TYPE": "int"
+  },
+  {
+    "COLUMN_NAME": "reference_sub_number",
+    "DATA_TYPE": "smallint"
+  },
+  {
+    "COLUMN_NAME": "reference_year",
+    "DATA_TYPE": "int"
+  },
+  {
+    "COLUMN_NAME": "reporting_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "status",
+    "DATA_TYPE": "varchar"
+  },
+  {
+    "COLUMN_NAME": "time_bar_date",
+    "DATA_TYPE": "date"
+  },
+  {
+    "COLUMN_NAME": "voyage_and_leg",
+    "DATA_TYPE": "varchar"
+  },
+  {
+    "COLUMN_NAME": "club_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "handler_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "local_agent_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "local_office_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "member_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "owner_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "place_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "reporter_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "ship_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "type_id",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "created_by_user",
+    "DATA_TYPE": "varchar"
+  },
+  {
+    "COLUMN_NAME": "created_date",
+    "DATA_TYPE": "bigint"
+  },
+  {
+    "COLUMN_NAME": "last_modified_by_user",
+    "DATA_TYPE": "varchar"
+  },
+  {
+    "COLUMN_NAME": "last_modified_date",
+    "DATA_TYPE": "bigint"
+  }
+]

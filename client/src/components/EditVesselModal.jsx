@@ -89,9 +89,9 @@ export default function EditVesselModal({ isOpen, onClose, vesselId, onSaved }) 
                             <input
                                 type="text"
                                 value={vesselData.name}
-                                onChange={(e) => setVesselData({ ...vesselData, name: e.target.value })}
+                                onChange={(e) => setVesselData({ ...vesselData, name: e.target.value.toUpperCase() })}
                                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter vessel name"
+                                placeholder="ENTER VESSEL NAME"
                                 autoFocus
                             />
                         </div>
