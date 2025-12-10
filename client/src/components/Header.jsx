@@ -11,7 +11,7 @@ export default function Header() {
                     <img
                         src={headerLogo}
                         alt="Proinde"
-                        className="h-[38px] grayscale brightness-200 mix-blend-screen"
+                        className="h-[29px] grayscale brightness-200 mix-blend-screen"
                     />
                 </div>
                 {/* Title - Optional, keeping it if needed or removing if image replaces it completely. 

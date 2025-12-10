@@ -33,6 +33,7 @@ router.get('/incident/:incidentId', async (req, res) => {
                        oc.name as office_contact_name, oc.email as office_contact_email,
                        o.code as office_code,
                        m.name as member_name, m.line1 as member_line1, m.line2 as member_line2, m.line3 as member_line3, m.line4 as member_line4, m.vat_number as member_vat,
+                       curr.name as incident_currency_name,
                        (SELECT ISNULL(SUM(f.cost * f.quantity), 0) FROM fee f WHERE f.invoice_id = i.id AND f.contractor_id IS NOT NULL) as correspondent_fees_total,
                        (
                            (SELECT ISNULL(SUM(d.gross_amount), 0) FROM disbursement d WHERE d.invoice_id = i.id) +
@@ -46,6 +47,7 @@ router.get('/incident/:incidentId', async (req, res) => {
                 LEFT JOIN contact cc ON i.club_contact_id = cc.id
                 LEFT JOIN contact oc ON i.office_contact_id = oc.id
                 LEFT JOIN member m ON inc.member_id = m.id
+                LEFT JOIN currency curr ON i.currency_id = curr.id
                 WHERE i.incident_id = @incident_id
                 ORDER BY i.invoice_date DESC, i.id DESC
             `);
@@ -98,6 +100,7 @@ router.get('/:id', async (req, res) => {
                     dbo.get_reference_number(inc.id) as supplier_reference, inc.club_reference,
                     p.name as place_of_incident,
                     s.name as vessel_name,
+                    curr.name as incident_currency_name,
                     m.name as member_name, m.line1 as member_line1, m.line2 as member_line2, m.line3 as member_line3, m.line4 as member_line4, m.vat_number as member_vat,
                     i.care_of_id, i.care_of_details,
                     cocl.name as care_of_club_name, cocl.line1 as care_of_club_line1, cocl.line2 as care_of_club_line2, cocl.line3 as care_of_club_line3, cocl.line4 as care_of_club_line4, cocl.vat_number as care_of_club_vat,
@@ -117,6 +120,7 @@ router.get('/:id', async (req, res) => {
                 LEFT JOIN port p ON inc.place_id = p.id
                 LEFT JOIN member m ON inc.member_id = m.id
                 LEFT JOIN ship s ON inc.ship_id = s.id
+                LEFT JOIN currency curr ON i.currency_id = curr.id
                 WHERE i.id = @id
             `);
 

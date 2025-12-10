@@ -203,6 +203,39 @@ router.get('/', async (req, res) => {
     }
 });
 
+// GET incident details for print (same as GET /:id for now)
+router.get('/:id/print', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                SELECT 
+                    i.*, 
+                    dbo.get_reference_number(i.id) as formatted_reference,
+                    s.name as vessel_name, 
+                    o.name as office_name,
+                    c.code as club_code
+                FROM incident i
+                LEFT JOIN ship s ON i.ship_id = s.id
+                LEFT JOIN office o ON i.local_office_id = o.id
+                LEFT JOIN club c ON i.club_id = c.id
+                WHERE i.id = @id
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Incident not found');
+        }
+
+        res.json(result.recordset[0]);
+    } catch (err) {
+        console.error('Error fetching incident for print:', err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // GET single incident by ID
 router.get('/:id', async (req, res) => {
     try {
@@ -216,10 +249,12 @@ router.get('/:id', async (req, res) => {
                     i.*, 
                     dbo.get_reference_number(i.id) as formatted_reference,
                     s.name as vessel_name, 
-                    o.name as office_name
+                    o.name as office_name,
+                    c.code as club_code
                 FROM incident i
                 LEFT JOIN ship s ON i.ship_id = s.id
                 LEFT JOIN office o ON i.local_office_id = o.id
+                LEFT JOIN club c ON i.club_id = c.id
                 WHERE i.id = @id
             `);
 

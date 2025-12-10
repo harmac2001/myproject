@@ -346,39 +346,21 @@ export default function InvoicePrintStyled() {
                             </table>
                         </td>
                     </tr>
-                </tbody>
-            </table>
-            <table>
-                <tbody>
                     <tr>
-                        <td />
-                    </tr>
-                </tbody>
-            </table>
-
-            {/* New Description Block */}
-            <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
-                <tbody>
-                    <tr>
-                        <td>
-                            <table width="100%">
+                        <td valign="top">
+                            <table width="100%" border="0" cellPadding="0" cellSpacing="0">
                                 <tbody>
                                     <tr>
-                                        <td className="headingnew">Description</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <table width="100%">
-                                <tbody>
-                                    <tr>
-                                        <td className="labelsmall" style={{ padding: '10px', whiteSpace: 'pre-wrap' }}>
-                                            {invoice.description || invoice.incident_description}
-                                        </td>
+                                        <td width="110" className="labelmediumbold" valign="top">Description:&nbsp;</td>
+                                        <td className="labelsmall" style={{ whiteSpace: 'pre-wrap' }}>{invoice.description || invoice.incident_description}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </td>
+                        <td />
+                        <td />
                     </tr>
+
                 </tbody>
             </table>
 
@@ -389,6 +371,7 @@ export default function InvoicePrintStyled() {
                     </tr>
                 </tbody>
             </table>
+
             <table className="tableborderthick" width="96%" border="0" style={{ margin: '0 auto' }}>
                 <tbody>
                     <tr>
