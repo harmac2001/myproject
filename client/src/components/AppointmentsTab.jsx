@@ -53,7 +53,7 @@ export default function AppointmentsTab({ incidentId }) {
             final_survey_date: '',
             preliminary_report_date: '',
             report_delivery_date: '',
-            invoice_proinde: false,
+            invoice_proinde: true,
             isNew: true
         })
         setIsEditing(true)
@@ -241,9 +241,24 @@ export default function AppointmentsTab({ incidentId }) {
                             <label className="block text-xs font-bold text-slate-700 mb-1">
                                 Invoice through Proinde
                             </label>
-                            <div className="text-sm font-bold">
-                                {currentAppointment.invoice_proinde ? 'YES' : 'NO'}
-                            </div>
+                            {isEditing ? (
+                                <div className="flex items-center gap-2 h-[38px]">
+                                    <input
+                                        type="checkbox"
+                                        className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                                        checked={currentAppointment.invoice_proinde || false}
+                                        onChange={(e) => setCurrentAppointment({
+                                            ...currentAppointment,
+                                            invoice_proinde: e.target.checked
+                                        })}
+                                    />
+                                    <span className="text-sm text-slate-700">Yes</span>
+                                </div>
+                            ) : (
+                                <div className="text-sm font-bold pt-2">
+                                    {currentAppointment.invoice_proinde ? 'YES' : 'NO'}
+                                </div>
+                            )}
                         </div>
 
                         {/* Action Buttons */}

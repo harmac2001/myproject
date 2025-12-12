@@ -14,8 +14,19 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
     })
 
     useEffect(() => {
-        if (isOpen && memberId) {
-            fetchMemberData()
+        if (isOpen) {
+            if (memberId) {
+                fetchMemberData()
+            } else {
+                setMemberData({
+                    name: '',
+                    line1: '',
+                    line2: '',
+                    line3: '',
+                    line4: '',
+                    vat_number: ''
+                })
+            }
         }
     }, [isOpen, memberId])
 
@@ -47,7 +58,7 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
             }
         } catch (err) {
             console.error('Error fetching member:', err)
-            alert(`Error loading member data: ${err.message}`)
+            // alert(`Error loading member data: ${err.message}`)
             onClose() // Close modal on error to prevent being stuck
         } finally {
             setLoading(false)
@@ -62,8 +73,14 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
 
         setSaving(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/members/${memberId}`, {
-                method: 'PUT',
+            const url = memberId
+                ? `http://localhost:5000/api/options/members/${memberId}`
+                : `http://localhost:5000/api/options/members`
+
+            const method = memberId ? 'PUT' : 'POST'
+
+            const response = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(memberData)
             })
@@ -87,11 +104,11 @@ export default function EditMemberModal({ isOpen, onClose, memberId, onSaved }) 
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70]">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                    <h2 className="text-lg font-bold text-slate-900">Edit Member</h2>
+                    <h2 className="text-lg font-bold text-slate-900">{memberId ? 'Edit Member' : 'Add New Member'}</h2>
                     <button
                         type="button"
                         onClick={onClose}

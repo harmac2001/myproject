@@ -94,7 +94,7 @@ export default function ReassignMemberModal({ isOpen, onClose, memberId, memberN
     const fieldLabel = isManger ? 'Manager' : 'Member'
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[80]">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
@@ -134,6 +134,7 @@ export default function ReassignMemberModal({ isOpen, onClose, memberId, memberN
                                             <thead className="bg-slate-50 sticky top-0">
                                                 <tr>
                                                     <th className="px-3 py-2 text-left text-xs font-bold text-slate-700">Reference</th>
+                                                    <th className="px-3 py-2 text-left text-xs font-bold text-slate-700">Office</th>
                                                     <th className="px-3 py-2 text-left text-xs font-bold text-slate-700">Used As</th>
                                                     <th className="px-3 py-2 text-left text-xs font-bold text-slate-700">Description</th>
                                                 </tr>
@@ -142,6 +143,7 @@ export default function ReassignMemberModal({ isOpen, onClose, memberId, memberN
                                                 {incidents.map(incident => (
                                                     <tr key={incident.id}>
                                                         <td className="px-3 py-2 text-sm text-slate-900">{incident.reference_number || '-'}</td>
+                                                        <td className="px-3 py-2 text-sm text-slate-600">{incident.office_name || '-'}</td>
                                                         <td className="px-3 py-2 text-sm text-slate-600 capitalize">{incident.used_as || '-'}</td>
                                                         <td className="px-3 py-2 text-sm text-slate-600 truncate max-w-xs">{incident.description || '-'}</td>
                                                     </tr>

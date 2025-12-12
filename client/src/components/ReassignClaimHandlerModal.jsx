@@ -2,22 +2,22 @@ import React, { useState, useEffect } from 'react'
 import { X, AlertTriangle } from 'lucide-react'
 import SearchableSelect from './SearchableSelect'
 
-export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselName, ships, onReassignAndDelete, onReassigned }) {
+export default function ReassignClaimHandlerModal({ isOpen, onClose, handlerId, handlerName, handlers, onReassignAndDelete }) {
     const [loading, setLoading] = useState(false)
     const [incidents, setIncidents] = useState([])
-    const [newVesselId, setNewVesselId] = useState('')
+    const [newHandlerId, setNewHandlerId] = useState('')
     const [reassigning, setReassigning] = useState(false)
 
     useEffect(() => {
-        if (isOpen && vesselId) {
-            fetchIncidentsUsingVessel()
+        if (isOpen && handlerId) {
+            fetchIncidents()
         }
-    }, [isOpen, vesselId])
+    }, [isOpen, handlerId])
 
-    const fetchIncidentsUsingVessel = async () => {
+    const fetchIncidents = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/ships/${vesselId}/incidents`)
+            const response = await fetch(`http://localhost:5000/api/options/claim_handlers/${handlerId}/incidents`)
             const data = await response.json()
             setIncidents(data)
         } catch (err) {
@@ -29,24 +29,24 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
     }
 
     const handleReassign = async () => {
-        if (!newVesselId) {
-            alert('Please select a replacement vessel')
+        if (!newHandlerId) {
+            alert('Please select a replacement claim handler')
             return
         }
 
-        if (newVesselId === vesselId) {
-            alert('Please select a different vessel')
+        if (String(newHandlerId) === String(handlerId)) {
+            alert('Please select a different claim handler')
             return
         }
 
         setReassigning(true)
         try {
-            // Update all incidents to use the new vessel
+            // Update all incidents to use the new handler
             for (const incident of incidents) {
-                const response = await fetch(`http://localhost:5000/api/incidents/${incident.id}/reassign-vessel`, {
+                const response = await fetch(`http://localhost:5000/api/incidents/${incident.id}/reassign-claim-handler`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ newVesselId })
+                    body: JSON.stringify({ newHandlerId })
                 })
 
                 if (!response.ok) {
@@ -54,21 +54,16 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
                 }
             }
 
-            // Notify parent about the reassignment before deleting
-            if (onReassigned) {
-                onReassigned(newVesselId)
-            }
-
-            // Now delete the old vessel
-            await onReassignAndDelete(vesselId)
+            // Now delete the old handler
+            await onReassignAndDelete(handlerId)
 
             onClose()
 
-            // Reload the page to show the updated vessel
+            // Reload the page to show updates
             window.location.reload()
         } catch (err) {
-            console.error('Error reassigning vessels:', err)
-            alert('Error reassigning vessels: ' + err.message)
+            console.error('Error reassigning handlers:', err)
+            alert('Error reassigning handlers: ' + err.message)
         } finally {
             setReassigning(false)
         }
@@ -76,8 +71,8 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
 
     if (!isOpen) return null
 
-    // Filter out the vessel being deleted from the options
-    const availableShips = ships.filter(ship => ship.id !== vesselId)
+    // Filter out the handler being deleted from the options
+    const availableHandlers = handlers.filter(h => String(h.id) !== String(handlerId))
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[80]">
@@ -86,7 +81,7 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
                     <div className="flex items-center gap-2">
                         <AlertTriangle className="h-5 w-5 text-orange-500" />
-                        <h2 className="text-lg font-bold text-slate-900">Reassign Vessel</h2>
+                        <h2 className="text-lg font-bold text-slate-900">Reassign Claim Handler</h2>
                     </div>
                     <button
                         onClick={onClose}
@@ -106,14 +101,14 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
                         <div className="space-y-4">
                             <div className="bg-orange-50 border border-orange-200 rounded-md p-4">
                                 <p className="text-sm text-orange-800">
-                                    The vessel <strong>"{vesselName}"</strong> is currently used in <strong>{incidents.length} incident{incidents.length !== 1 ? 's' : ''}</strong>.
-                                    To delete this vessel, you must first reassign {incidents.length === 1 ? 'this incident' : 'these incidents'} to a different vessel.
+                                    The handler <strong>"{handlerName}"</strong> is currently assigned to <strong>{incidents.length} incident{incidents.length !== 1 ? 's' : ''}</strong>.
+                                    To delete this handler, you must first reassign {incidents.length === 1 ? 'this incident' : 'these incidents'} to a different person.
                                 </p>
                             </div>
 
                             {incidents.length > 0 && (
                                 <div>
-                                    <h3 className="text-sm font-bold text-slate-700 mb-2">Incidents using this vessel:</h3>
+                                    <h3 className="text-sm font-bold text-slate-700 mb-2">Incidents assigned to this handler:</h3>
                                     <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-md">
                                         <table className="min-w-full divide-y divide-slate-200">
                                             <thead className="bg-slate-50 sticky top-0">
@@ -139,13 +134,13 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
 
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">
-                                    Select Replacement Vessel <span className="text-red-500">*</span>
+                                    Select Replacement Handler <span className="text-red-500">*</span>
                                 </label>
                                 <SearchableSelect
-                                    options={availableShips}
-                                    value={newVesselId}
-                                    onChange={setNewVesselId}
-                                    placeholder="Select replacement vessel..."
+                                    options={availableHandlers}
+                                    value={newHandlerId}
+                                    onChange={setNewHandlerId}
+                                    placeholder="Select replacement handler..."
                                     className="w-full"
                                     disabled={false}
                                 />
@@ -165,7 +160,7 @@ export default function ReassignVesselModal({ isOpen, onClose, vesselId, vesselN
                     </button>
                     <button
                         onClick={handleReassign}
-                        disabled={reassigning || loading || !newVesselId}
+                        disabled={reassigning || loading || !newHandlerId}
                         className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
                     >
                         {reassigning ? 'Reassigning...' : 'Reassign & Delete'}

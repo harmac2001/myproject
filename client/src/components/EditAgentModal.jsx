@@ -7,8 +7,12 @@ export default function EditAgentModal({ isOpen, onClose, agentId, onSaved }) {
     const [agentData, setAgentData] = useState({ name: '' })
 
     useEffect(() => {
-        if (isOpen && agentId) {
-            fetchAgentData()
+        if (isOpen) {
+            if (agentId) {
+                fetchAgentData()
+            } else {
+                setAgentData({ name: '' })
+            }
         }
     }, [isOpen, agentId])
 
@@ -37,8 +41,14 @@ export default function EditAgentModal({ isOpen, onClose, agentId, onSaved }) {
 
         setSaving(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/agents/${agentId}`, {
-                method: 'PUT',
+            const url = agentId
+                ? `http://localhost:5000/api/options/agents/${agentId}`
+                : `http://localhost:5000/api/options/agents`
+
+            const method = agentId ? 'PUT' : 'POST'
+
+            const response = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(agentData)
             })
@@ -62,11 +72,11 @@ export default function EditAgentModal({ isOpen, onClose, agentId, onSaved }) {
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70]">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                    <h2 className="text-lg font-bold text-slate-900">Edit Local Agent</h2>
+                    <h2 className="text-lg font-bold text-slate-900">{agentId ? 'Edit Local Agent' : 'Add New Local Agent'}</h2>
                     <button
                         type="button"
                         onClick={onClose}

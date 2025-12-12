@@ -1,4 +1,4 @@
-import { Search, Plus, ChevronDown } from 'lucide-react'
+import { Search, Plus, ChevronDown, Download } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import leftIcon from '../assets/left_icon.jpg'
@@ -115,6 +115,44 @@ export default function IncidentList() {
         'Vessel'
     ]
 
+    const handleSearchChange = (val) => {
+        setSearch(val)
+        // Reset page and incidents explicitly to prevent race condition with fetch
+        setPage(1)
+        setIncidents([])
+        setHasMore(true)
+    }
+
+    const handleScopeChange = (val) => {
+        setSearchScope(val)
+        setPage(1)
+        setIncidents([])
+        setHasMore(true)
+    }
+
+    const handleStatusChange = (val) => {
+        setStatus(val)
+        setPage(1)
+        setIncidents([])
+        setHasMore(true)
+    }
+
+    const handleOfficeChange = (id) => {
+        // Toggle office logic moved here if needed, or just keep simple state update but add reset
+        // Wait, 'office' state is comma separated string.
+        let newOffice;
+        const currentIds = office ? office.split(',') : []
+        if (currentIds.includes(String(id))) {
+            newOffice = currentIds.filter(oid => oid !== String(id)).join(',')
+        } else {
+            newOffice = [...currentIds, String(id)].join(',')
+        }
+        setOffice(newOffice)
+        setPage(1)
+        setIncidents([])
+        setHasMore(true)
+    }
+
     const ADVANCED_SEARCH_CATEGORIES = [
         'Cargo Type',
         'Claim Handler',
@@ -205,9 +243,13 @@ export default function IncidentList() {
         params.append('page', page)
         params.append('limit', limit)
 
-        fetch(`http://localhost:5000/api/incidents?${params.toString()}`)
+        const url = `http://localhost:5000/api/incidents?${params.toString()}`;
+
+        fetch(url)
             .then(res => res.json())
             .then(data => {
+                // TEMP DEBUG
+                // alert(`Fetch Success! Found: ${data.data.length}, Total: ${data.total}`);
                 const newIncidents = isLoadMore ? [...incidents, ...data.data] : data.data
                 setIncidents(newIncidents)
                 setTotal(data.total)
@@ -243,35 +285,51 @@ export default function IncidentList() {
         return () => clearTimeout(delayDebounceFn)
     }, [search, searchScope, status, office, page, advancedSearchCategory, advancedSearchValue])
 
-    // Reset incidents and page when search, status, or office changes
+    // Reset logic is now handled in change handlers to prevent race conditions during fetch
+    // useEffect(() => { ... }) removed
+
+    // Infinite scroll with Intersection Observer
+    const observerTarget = useRef(null)
+
     useEffect(() => {
-        setIncidents([])
-        setPage(1)
-        setHasMore(true)
-    }, [search, searchScope, status, office])
+        const observer = new IntersectionObserver(
+            entries => {
+                // Prevent loading more if we have no items (initial load or search reset)
+                if (entries[0].isIntersecting && hasMore && !loading && incidents.length > 0) {
+                    setPage(prev => prev + 1)
+                }
+            },
+            { threshold: 0.1 }
+        )
 
-    // Infinite scroll handler
-    const handleScroll = () => {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-        const scrollHeight = document.documentElement.scrollHeight
-        const clientHeight = window.innerHeight
-
-        if (scrollTop + clientHeight >= scrollHeight - 100 && !loading && hasMore) {
-            setPage(prevPage => prevPage + 1)
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current)
         }
-    }
 
-    useEffect(() => {
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [loading, hasMore])
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current)
+            }
+        }
+    }, [hasMore, loading, incidents.length])
 
-    const handleOfficeChange = (officeId) => {
-        const officeIds = office.split(',').filter(id => id)
-        const newOfficeIds = officeIds.includes(String(officeId))
-            ? officeIds.filter(id => id !== String(officeId))
-            : [...officeIds, String(officeId)]
-        setOffice(newOfficeIds.join(','))
+
+
+    const handleExport = () => {
+        const params = new URLSearchParams()
+        if (search) {
+            params.append('search', search)
+            params.append('search_scope', searchScope)
+        }
+        if (status !== 'All') params.append('status', status)
+        if (office) params.append('office', office)
+        if (advancedSearchCategory && advancedSearchValue) {
+            params.append('filter_field', advancedSearchCategory)
+            params.append('filter_value', advancedSearchValue)
+        }
+
+        // Trigger download
+        window.open(`http://localhost:5000/api/incidents/export?${params.toString()}`, '_blank')
     }
 
     const getStatusColor = (status) => {
@@ -299,7 +357,13 @@ export default function IncidentList() {
 
 
 
+
+
+
+
             <main className="w-full px-4 py-8">
+
+
                 {/* Filters */}
                 <div className="flex flex-col gap-4 mb-8">
                     <div className="flex flex-col sm:flex-row gap-4">
@@ -310,7 +374,7 @@ export default function IncidentList() {
                                 placeholder="Search..."
                                 className="input-field pl-10 py-2.5 w-full"
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={(e) => handleSearchChange(e.target.value)}
                             />
                         </div>
                         <div className="flex items-center gap-4">
@@ -318,11 +382,27 @@ export default function IncidentList() {
                             <select
                                 className="input-field w-64 py-2.5"
                                 value={searchScope}
-                                onChange={(e) => setSearchScope(e.target.value)}
+                                onChange={(e) => handleScopeChange(e.target.value)}
                             >
                                 {SEARCH_SCOPES.map(scope => (
                                     <option key={scope} value={scope}>{scope}</option>
                                 ))}
+                            </select>
+
+                            {/* Status Filter */}
+                            <select
+                                className="input-field w-40 py-2.5"
+                                value={status}
+                                onChange={(e) => handleStatusChange(e.target.value)}
+                            >
+                                <option value="All">All Statuses</option>
+                                <option value="OPEN">Open</option>
+                                <option value="INVESTIGATING">Investigating</option>
+                                <option value="OUTSTANDING">Outstanding</option>
+                                <option value="CLOSED">Closed</option>
+                                <option value="WITHDRAWN">Withdrawn</option>
+                                <option value="REPUDIATED">Repudiated</option>
+                                <option value="DISCARDED">Discarded</option>
                             </select>
 
                             {/* Advanced Search Category */}
@@ -372,6 +452,16 @@ export default function IncidentList() {
                             >
                                 <Plus className="h-5 w-5" />
                                 New Incident
+                            </button>
+
+                            {/* Export Button */}
+                            <button
+                                onClick={handleExport}
+                                className="inline-flex items-center justify-center rounded-lg bg-white border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 flex items-center gap-2"
+                                title="Export filtered list to Excel"
+                            >
+                                <Download className="h-5 w-5 text-green-600" />
+                                Export
                             </button>
                         </div>
                     </div>
@@ -461,6 +551,9 @@ export default function IncidentList() {
                 <div className="mt-4 text-sm text-slate-600 text-center">
                     Showing {incidents.length} of {total} incidents
                 </div>
+
+                {/* Scroll Sentinel */}
+                <div ref={observerTarget} className="h-4 w-full" />
             </main>
         </div>
     )

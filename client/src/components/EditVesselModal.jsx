@@ -7,8 +7,12 @@ export default function EditVesselModal({ isOpen, onClose, vesselId, onSaved }) 
     const [vesselData, setVesselData] = useState({ name: '' })
 
     useEffect(() => {
-        if (isOpen && vesselId) {
-            fetchVesselData()
+        if (isOpen) {
+            if (vesselId) {
+                fetchVesselData()
+            } else {
+                setVesselData({ name: '' })
+            }
         }
     }, [isOpen, vesselId])
 
@@ -37,8 +41,14 @@ export default function EditVesselModal({ isOpen, onClose, vesselId, onSaved }) 
 
         setSaving(true)
         try {
-            const response = await fetch(`http://localhost:5000/api/options/ships/${vesselId}`, {
-                method: 'PUT',
+            const url = vesselId
+                ? `http://localhost:5000/api/options/ships/${vesselId}`
+                : `http://localhost:5000/api/options/ships`
+
+            const method = vesselId ? 'PUT' : 'POST'
+
+            const response = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(vesselData)
             })
@@ -62,11 +72,11 @@ export default function EditVesselModal({ isOpen, onClose, vesselId, onSaved }) 
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70]">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-200">
-                    <h2 className="text-lg font-bold text-slate-900">Edit Vessel</h2>
+                    <h2 className="text-lg font-bold text-slate-900">{vesselId ? 'Edit Vessel' : 'Add New Vessel'}</h2>
                     <button
                         onClick={onClose}
                         className="text-slate-400 hover:text-slate-600"

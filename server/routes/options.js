@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { sql, poolPromise } = require('../db');
+// Trigger restart
 
 // GET all ships
 router.get('/ships', async (req, res) => {
@@ -106,8 +107,10 @@ router.get('/ships/:id/incidents', async (req, res) => {
                 SELECT 
                     i.id,
                     dbo.get_reference_number(i.id) as reference_number,
-                    i.description
+                    i.description,
+                    o.name as office_name
                 FROM incident i
+                LEFT JOIN office o ON i.local_office_id = o.id
                 WHERE i.ship_id = @id
                 ORDER BY i.reference_number DESC
             `);
@@ -265,16 +268,20 @@ router.get('/members/:id/incidents', async (req, res) => {
                     i.id,
                     dbo.get_reference_number(i.id) as reference_number,
                     i.description,
-                    'member' as used_as
+                    'member' as used_as,
+                    o.name as office_name
                 FROM incident i
+                LEFT JOIN office o ON i.local_office_id = o.id
                 WHERE i.member_id = @id
                 UNION
                 SELECT 
                     i.id,
                     dbo.get_reference_number(i.id) as reference_number,
                     i.description,
-                    'manager' as used_as
+                    'manager' as used_as,
+                    o.name as office_name
                 FROM incident i
+                LEFT JOIN office o ON i.local_office_id = o.id
                 WHERE i.owner_id = @id
                 ORDER BY reference_number DESC
             `);
@@ -313,11 +320,167 @@ router.get('/clubs', async (req, res) => {
     }
 });
 
+// POST club
+router.post('/clubs', async (req, res) => {
+    try {
+        // We set incident_club = 1 by default for now, as these are "Clients"
+        const { name, code, line1, line2, line3, line4, vat_number } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name.trim())
+            .input('code', sql.VarChar, code ? code.trim() : null)
+            .input('line1', sql.NVarChar, line1 || null)
+            .input('line2', sql.NVarChar, line2 || null)
+            .input('line3', sql.NVarChar, line3 || null)
+            .input('line4', sql.NVarChar, line4 || null)
+            .input('vat_number', sql.NVarChar, vat_number || null)
+            .query('INSERT INTO club (name, code, line1, line2, line3, line4, vat_number, incident_club) OUTPUT INSERTED.* VALUES (@name, @code, @line1, @line2, @line3, @line4, @vat_number, 1)');
+        res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT club
+router.put('/clubs/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, code, line1, line2, line3, line4, vat_number } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .input('code', sql.VarChar, code ? code.trim() : null)
+            .input('line1', sql.NVarChar, line1 || null)
+            .input('line2', sql.NVarChar, line2 || null)
+            .input('line3', sql.NVarChar, line3 || null)
+            .input('line4', sql.NVarChar, line4 || null)
+            .input('vat_number', sql.NVarChar, vat_number || null)
+            .query('UPDATE club SET name = @name, code = @code, line1 = @line1, line2 = @line2, line3 = @line3, line4 = @line4, vat_number = @vat_number OUTPUT INSERTED.* WHERE id = @id');
+
+        if (result.recordset.length === 0) return res.status(404).send('Not found');
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE club
+router.delete('/clubs/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // Check incident.club_id and invoice.care_of_id
+        const checkInc = await pool.request().input('id', sql.BigInt, id).query('SELECT COUNT(*) as count FROM incident WHERE club_id = @id');
+        const checkInv = await pool.request().input('id', sql.BigInt, id).query('SELECT COUNT(*) as count FROM invoice WHERE care_of_id = @id');
+
+        const count = checkInc.recordset[0].count + checkInv.recordset[0].count;
+
+        if (count > 0) return res.status(400).json({ message: `Used in ${checkInc.recordset[0].count} incident(s) and ${checkInv.recordset[0].count} invoice(s).` });
+
+        const result = await pool.request().input('id', sql.BigInt, id).query('DELETE FROM club WHERE id = @id');
+        if (result.rowsAffected[0] === 0) return res.status(404).send('Not found');
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 // Get claim handlers
 router.get('/claim_handlers', async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request().query('SELECT id, code, name FROM claim_handler ORDER BY name');
+        const result = await pool.request().query('SELECT id, code, name, email FROM claim_handler ORDER BY name');
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// POST claim handler
+router.post('/claim_handlers', async (req, res) => {
+    try {
+        const { name, code, email } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name.trim())
+            .input('code', sql.VarChar, code ? code.trim() : null)
+            .input('email', sql.NVarChar, email ? email.trim() : null)
+            .query('INSERT INTO claim_handler (name, code, email) OUTPUT INSERTED.* VALUES (@name, @code, @email)');
+        res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT claim handler
+router.put('/claim_handlers/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, code, email } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .input('code', sql.VarChar, code ? code.trim() : null)
+            .input('email', sql.NVarChar, email ? email.trim() : null)
+            .query('UPDATE claim_handler SET name = @name, code = @code, email = @email OUTPUT INSERTED.* WHERE id = @id');
+        if (result.recordset.length === 0) return res.status(404).send('Not found');
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE claim handler
+router.delete('/claim_handlers/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM incident WHERE handler_id = @id');
+
+        if (checkResult.recordset[0].count > 0) return res.status(400).json({ message: `Used in ${checkResult.recordset[0].count} incident(s).` });
+
+        const result = await pool.request().input('id', sql.BigInt, id).query('DELETE FROM claim_handler WHERE id = @id');
+        if (result.rowsAffected[0] === 0) return res.status(404).send('Not found');
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// GET incidents using a specific claim handler (for reassignment)
+router.get('/claim_handlers/:id/incidents', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query(`
+                SELECT 
+                    i.id,
+                    dbo.get_reference_number(i.id) as reference_number,
+                    i.description,
+                    o.name as office_name
+                FROM incident i
+                LEFT JOIN office o ON i.local_office_id = o.id
+                WHERE i.handler_id = @id
+                ORDER BY reference_number DESC
+            `);
+
         res.json(result.recordset);
     } catch (err) {
         res.status(500).send(err.message);
@@ -328,8 +491,104 @@ router.get('/claim_handlers', async (req, res) => {
 router.get('/offices', async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request().query('SELECT id, name, location FROM office ORDER BY name');
+        const result = await pool.request().query('SELECT id, name, location, code, line1, line2, line3, line4, telephone, fax, email, vat_number, registration FROM office ORDER BY name');
         res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// POST create new office
+router.post('/offices', async (req, res) => {
+    try {
+        const { name, location, code, line1, line2, line3, line4, telephone, fax, email, vat_number, registration } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Office name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name.trim())
+            .input('location', sql.NVarChar, location ? location.trim() : null)
+            .input('code', sql.VarChar, code ? code.trim() : null)
+            .input('line1', sql.NVarChar, line1 ? line1.trim() : null)
+            .input('line2', sql.NVarChar, line2 ? line2.trim() : null)
+            .input('line3', sql.NVarChar, line3 ? line3.trim() : null)
+            .input('line4', sql.NVarChar, line4 ? line4.trim() : null)
+            .input('telephone', sql.VarChar, telephone ? telephone.trim() : null)
+            .input('fax', sql.VarChar, fax ? fax.trim() : null)
+            .input('email', sql.VarChar, email ? email.trim() : null)
+            .input('vat_number', sql.VarChar, vat_number ? vat_number.trim() : null)
+            .input('registration', sql.VarChar, registration ? registration.trim() : null)
+            .query(`
+                INSERT INTO office (name, location, code, line1, line2, line3, line4, telephone, fax, email, vat_number, registration) 
+                OUTPUT INSERTED.* 
+                VALUES (@name, @location, @code, @line1, @line2, @line3, @line4, @telephone, @fax, @email, @vat_number, @registration)
+            `);
+
+        res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT update office
+router.put('/offices/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, location, code, line1, line2, line3, line4, telephone, fax, email, vat_number, registration } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Office name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .input('location', sql.NVarChar, location ? location.trim() : null)
+            .input('code', sql.VarChar, code ? code.trim() : null)
+            .input('line1', sql.NVarChar, line1 ? line1.trim() : null)
+            .input('line2', sql.NVarChar, line2 ? line2.trim() : null)
+            .input('line3', sql.NVarChar, line3 ? line3.trim() : null)
+            .input('line4', sql.NVarChar, line4 ? line4.trim() : null)
+            .input('telephone', sql.VarChar, telephone ? telephone.trim() : null)
+            .input('fax', sql.VarChar, fax ? fax.trim() : null)
+            .input('email', sql.VarChar, email ? email.trim() : null)
+            .input('vat_number', sql.VarChar, vat_number ? vat_number.trim() : null)
+            .input('registration', sql.VarChar, registration ? registration.trim() : null)
+            .query(`
+                UPDATE office 
+                SET name = @name, location = @location, code = @code,
+                    line1 = @line1, line2 = @line2, line3 = @line3, line4 = @line4,
+                    telephone = @telephone, fax = @fax, email = @email,
+                    vat_number = @vat_number, registration = @registration
+                OUTPUT INSERTED.* 
+                WHERE id = @id
+            `);
+
+        if (result.recordset.length === 0) return res.status(404).send('Office not found');
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE office
+router.delete('/offices/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM incident WHERE local_office_id = @id');
+
+        if (checkResult.recordset[0].count > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete office',
+                message: `This office is used in ${checkResult.recordset[0].count} incident(s). Please reassign before deleting.`
+            });
+        }
+
+        const result = await pool.request().input('id', sql.BigInt, id).query('DELETE FROM office WHERE id = @id');
+        if (result.rowsAffected[0] === 0) return res.status(404).send('Office not found');
+        res.status(204).send();
     } catch (err) {
         res.status(500).send(err.message);
     }
@@ -346,12 +605,131 @@ router.get('/incident_types', async (req, res) => {
     }
 });
 
+// POST incident type
+router.post('/incident_types', async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name.trim())
+            .query('INSERT INTO incident_type (name) OUTPUT INSERTED.* VALUES (@name)');
+        res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT incident type
+router.put('/incident_types/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .query('UPDATE incident_type SET name = @name OUTPUT INSERTED.* WHERE id = @id');
+
+        if (result.recordset.length === 0) return res.status(404).send('Not found');
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE incident type
+router.delete('/incident_types/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM incident WHERE type_id = @id');
+
+        if (checkResult.recordset[0].count > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete incident type',
+                message: `This type is used in ${checkResult.recordset[0].count} incident(s).`
+            });
+        }
+
+        const result = await pool.request().input('id', sql.BigInt, id).query('DELETE FROM incident_type WHERE id = @id');
+        if (result.rowsAffected[0] === 0) return res.status(404).send('Not found');
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 // Get reporters
 router.get('/reporters', async (req, res) => {
     try {
         const pool = await poolPromise;
         const result = await pool.request().query('SELECT id, name FROM reporter ORDER BY name');
         res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// POST reporter
+router.post('/reporters', async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name.trim())
+            .query('INSERT INTO reporter (name) OUTPUT INSERTED.* VALUES (@name)');
+        res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT reporter
+router.put('/reporters/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .query('UPDATE reporter SET name = @name OUTPUT INSERTED.* WHERE id = @id');
+
+        if (result.recordset.length === 0) return res.status(404).send('Not found');
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE reporter
+router.delete('/reporters/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM incident WHERE reporter_id = @id');
+
+        if (checkResult.recordset[0].count > 0) {
+            return res.status(400).json({ message: `Used in ${checkResult.recordset[0].count} incident(s).` });
+        }
+
+        const result = await pool.request().input('id', sql.BigInt, id).query('DELETE FROM reporter WHERE id = @id');
+        if (result.rowsAffected[0] === 0) return res.status(404).send('Not found');
+        res.status(204).send();
     } catch (err) {
         res.status(500).send(err.message);
     }
@@ -397,8 +775,10 @@ router.get('/agents/:id/incidents', async (req, res) => {
                 SELECT 
                     i.id,
                     dbo.get_reference_number(i.id) as reference_number,
-                    i.description
+                    i.description,
+                    o.name as office_name
                 FROM incident i
+                LEFT JOIN office o ON i.local_office_id = o.id
                 WHERE i.local_agent_id = @id
                 ORDER BY reference_number DESC
             `);
@@ -481,6 +861,62 @@ router.get('/ports', async (req, res) => {
         res.status(500).send(err.message);
     }
 });
+
+// POST port
+router.post('/ports', async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('name', sql.NVarChar, name.trim())
+            .query('INSERT INTO port (name) OUTPUT INSERTED.* VALUES (@name)');
+        res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT port
+router.put('/ports/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        if (!name || name.trim() === '') return res.status(400).send('Name is required');
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .query('UPDATE port SET name = @name OUTPUT INSERTED.* WHERE id = @id');
+        if (result.recordset.length === 0) return res.status(404).send('Not found');
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE port
+router.delete('/ports/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM incident WHERE place_id = @id');
+
+        if (checkResult.recordset[0].count > 0) return res.status(400).json({ message: `Used in ${checkResult.recordset[0].count} incident(s).` });
+
+        const result = await pool.request().input('id', sql.BigInt, id).query('DELETE FROM port WHERE id = @id');
+        if (result.rowsAffected[0] === 0) return res.status(404).send('Not found');
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 
 // Get cargo types
 router.get('/cargo_types', async (req, res) => {
@@ -754,8 +1190,27 @@ router.delete('/traders/:id', async (req, res) => {
 router.get('/service_providers', async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request().query('SELECT id, COALESCE(friendly_name, name) as name FROM service_provider ORDER BY COALESCE(friendly_name, name)');
+        const result = await pool.request().query('SELECT id, COALESCE(friendly_name, name) as name, is_consultant FROM service_provider ORDER BY COALESCE(friendly_name, name)');
         res.json(result.recordset);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// GET single service provider
+router.get('/service_providers/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT * FROM service_provider WHERE id = @id');
+
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Service Provider not found');
+        }
+
+        res.json(result.recordset[0]);
     } catch (err) {
         res.status(500).send(err.message);
     }
@@ -764,7 +1219,12 @@ router.get('/service_providers', async (req, res) => {
 // POST create new service provider
 router.post('/service_providers', async (req, res) => {
     try {
-        const { name } = req.body;
+        const {
+            name, friendly_name, rate,
+            city, complement, country, district, location, location_number, postal_code, state_or_region,
+            cnpj, email, mobile, phone, website, is_consultant
+        } = req.body;
+
         if (!name || name.trim() === '') {
             return res.status(400).send('Service Provider name is required');
         }
@@ -772,9 +1232,145 @@ router.post('/service_providers', async (req, res) => {
         const pool = await poolPromise;
         const result = await pool.request()
             .input('name', sql.NVarChar, name.trim())
-            .query('INSERT INTO service_provider (name) OUTPUT INSERTED.id, INSERTED.name VALUES (@name)');
+            .input('friendly_name', sql.NVarChar, friendly_name || null)
+            .input('rate', sql.Decimal(18, 2), rate || null)
+            .input('city', sql.NVarChar, city || null)
+            .input('complement', sql.NVarChar, complement || null)
+            .input('country', sql.NVarChar, country || null)
+            .input('district', sql.NVarChar, district || null)
+            .input('location', sql.NVarChar, location || null)
+            .input('location_number', sql.NVarChar, location_number || null)
+            .input('postal_code', sql.NVarChar, postal_code || null)
+            .input('state_or_region', sql.NVarChar, state_or_region || null)
+            .input('cnpj', sql.NVarChar, cnpj || null)
+            .input('email', sql.NVarChar, email || null)
+            .input('mobile', sql.NVarChar, mobile || null)
+            .input('phone', sql.NVarChar, phone || null)
+            .input('website', sql.NVarChar, website || null)
+            .input('is_consultant', sql.Bit, is_consultant ? 1 : 0)
+            .query(`
+                INSERT INTO service_provider (
+                    name, friendly_name, rate, 
+                    city, complement, country, district, location, location_number, postal_code, state_or_region,
+                    cnpj, email, mobile, phone, website, is_consultant
+                ) 
+                OUTPUT INSERTED.id, INSERTED.name 
+                VALUES (
+                    @name, @friendly_name, @rate,
+                    @city, @complement, @country, @district, @location, @location_number, @postal_code, @state_or_region,
+                    @cnpj, @email, @mobile, @phone, @website, @is_consultant
+                )
+            `);
 
         res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT update service provider
+router.put('/service_providers/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            name, friendly_name, rate,
+            city, complement, country, district, location, location_number, postal_code, state_or_region,
+            cnpj, email, mobile, phone, website, is_consultant
+        } = req.body;
+
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Service Provider name is required');
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .input('friendly_name', sql.NVarChar, friendly_name || null)
+            .input('rate', sql.Decimal(18, 2), rate || null)
+            .input('city', sql.NVarChar, city || null)
+            .input('complement', sql.NVarChar, complement || null)
+            .input('country', sql.NVarChar, country || null)
+            .input('district', sql.NVarChar, district || null)
+            .input('location', sql.NVarChar, location || null)
+            .input('location_number', sql.NVarChar, location_number || null)
+            .input('postal_code', sql.NVarChar, postal_code || null)
+            .input('state_or_region', sql.NVarChar, state_or_region || null)
+            .input('cnpj', sql.NVarChar, cnpj || null)
+            .input('email', sql.NVarChar, email || null)
+            .input('mobile', sql.NVarChar, mobile || null)
+            .input('phone', sql.NVarChar, phone || null)
+            .input('website', sql.NVarChar, website || null)
+            .input('is_consultant', sql.Bit, is_consultant ? 1 : 0)
+            .query(`
+                UPDATE service_provider 
+                SET 
+                    name = @name,
+                    friendly_name = @friendly_name,
+                    rate = @rate,
+                    city = @city,
+                    complement = @complement,
+                    country = @country,
+                    district = @district,
+                    location = @location,
+                    location_number = @location_number,
+                    postal_code = @postal_code,
+                    state_or_region = @state_or_region,
+                    cnpj = @cnpj,
+                    email = @email,
+                    mobile = @mobile,
+                    phone = @phone,
+                    website = @website,
+                    is_consultant = @is_consultant
+                OUTPUT INSERTED.id, INSERTED.name 
+                WHERE id = @id
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Service Provider not found');
+        }
+
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE service provider
+router.delete('/service_providers/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // Check usage in fees (as third_party_contractor_id) and appointments (as consultant_id)
+        const checkFee = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM fee WHERE third_party_contractor_id = @id');
+
+        const checkAppt = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM appointment WHERE consultant_id = @id');
+
+        const feeCount = checkFee.recordset[0].count;
+        const apptCount = checkAppt.recordset[0].count;
+        const totalUsage = feeCount + apptCount;
+
+        if (totalUsage > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete service provider',
+                message: `This service provider is used in ${feeCount} fee(s) and ${apptCount} appointment(s). Please reassign them before deleting.`
+            });
+        }
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('DELETE FROM service_provider WHERE id = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Service Provider not found');
+        }
+
+        res.status(204).send();
     } catch (err) {
         res.status(500).send(err.message);
     }
@@ -816,6 +1412,64 @@ router.post('/contractors', async (req, res) => {
             .query('INSERT INTO contractor (name) OUTPUT INSERTED.id, INSERTED.name VALUES (@name)');
 
         res.status(201).json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// PUT update contractor
+router.put('/contractors/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+
+        if (!name || name.trim() === '') {
+            return res.status(400).send('Contractor name is required');
+        }
+
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('name', sql.NVarChar, name.trim())
+            .query('UPDATE contractor SET name = @name OUTPUT INSERTED.id, INSERTED.name WHERE id = @id');
+
+        if (result.recordset.length === 0) {
+            return res.status(404).send('Contractor not found');
+        }
+
+        res.json(result.recordset[0]);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
+// DELETE contractor
+router.delete('/contractors/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await poolPromise;
+
+        // Check usage in fees
+        const checkResult = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('SELECT COUNT(*) as count FROM fee WHERE contractor_id = @id');
+
+        if (checkResult.recordset[0].count > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete contractor',
+                message: `This contractor is used in ${checkResult.recordset[0].count} fee(s). Please reassign them before deleting.`
+            });
+        }
+
+        const result = await pool.request()
+            .input('id', sql.BigInt, id)
+            .query('DELETE FROM contractor WHERE id = @id');
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).send('Contractor not found');
+        }
+
+        res.status(204).send();
     } catch (err) {
         res.status(500).send(err.message);
     }

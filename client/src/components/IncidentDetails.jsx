@@ -313,7 +313,14 @@ export default function IncidentDetails() {
             { key: 'berthing_date', label: 'Arrival Date' }
         ]
 
-        const missingFields = requiredFields.filter(field => !formData[field.key])
+        const missingFields = requiredFields.filter(field => {
+            if (field.key === 'next_review_date') {
+                if (['CLOSED', 'WITHDRAWN', 'REPUDIATED', 'DISCARDED'].includes(formData.status)) {
+                    return false;
+                }
+            }
+            return !formData[field.key];
+        })
 
         if (missingFields.length > 0) {
             alert(`Please fill in the following mandatory fields:\n${missingFields.map(f => `- ${f.label}`).join('\n')}`)
@@ -932,14 +939,20 @@ export default function IncidentDetails() {
                                     value={formData.status}
                                     onChange={(val) => {
                                         const updates = { status: val };
-                                        if (val !== 'OPEN' && val !== 'OUTSTANDING') {
-                                            const today = new Date();
-                                            const twoYearsLater = new Date(today);
-                                            twoYearsLater.setFullYear(today.getFullYear() + 2);
+                                        const today = new Date();
 
-                                            updates.closing_date = today.toISOString().split('T')[0];
-                                            updates.estimated_disposal_date = twoYearsLater.toISOString().split('T')[0];
+                                        if (['CLOSED', 'WITHDRAWN', 'REPUDIATED'].includes(val)) {
+                                            if (!formData.estimated_disposal_date) {
+                                                const twoYearsLater = new Date(today);
+                                                twoYearsLater.setFullYear(today.getFullYear() + 2);
+                                                updates.estimated_disposal_date = twoYearsLater.toISOString().split('T')[0];
+                                            }
+                                        } else if (val === 'DISCARDED') {
+                                            if (!formData.effective_disposal_date) {
+                                                updates.effective_disposal_date = today.toISOString().split('T')[0];
+                                            }
                                         }
+
                                         setFormData({ ...formData, ...updates });
                                     }}
                                     placeholder="Select Status..."
@@ -948,6 +961,30 @@ export default function IncidentDetails() {
                                     searchable={false}
                                 />
                             </div>
+
+                            {['CLOSED', 'WITHDRAWN', 'REPUDIATED'].includes(formData.status) && (
+                                <div className="col-span-3">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Estimate Disposal Date</label>
+                                    <DateInput
+                                        className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
+                                        value={formData.estimated_disposal_date}
+                                        onChange={(e) => setFormData({ ...formData, estimated_disposal_date: e.target.value })}
+                                        disabled={!isEditing}
+                                    />
+                                </div>
+                            )}
+
+                            {formData.status === 'DISCARDED' && (
+                                <div className="col-span-3">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Date of Disposal</label>
+                                    <DateInput
+                                        className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
+                                        value={formData.effective_disposal_date}
+                                        onChange={(e) => setFormData({ ...formData, effective_disposal_date: e.target.value })}
+                                        disabled={!isEditing}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-12 gap-x-4 gap-y-4 mt-4">
@@ -1145,7 +1182,12 @@ export default function IncidentDetails() {
                                 />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Next Review Date <span className="text-red-500">*</span></label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Next Review Date
+                                    {!['CLOSED', 'WITHDRAWN', 'REPUDIATED', 'DISCARDED'].includes(formData.status) && (
+                                        <span className="text-red-500"> *</span>
+                                    )}
+                                </label>
                                 <DateInput
                                     className="input-field w-full py-2.5 disabled:bg-white disabled:text-slate-900 disabled:border-slate-300"
                                     value={formData.next_review_date}

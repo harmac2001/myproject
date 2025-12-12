@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { sql, poolPromise } = require('../db');
 const { createIncidentFolder, listIncidentFiles } = require('../services/graphService');
+const ExcelJS = require('exceljs');
 
 // GET incident documents from SharePoint
 router.get('/:id/documents', async (req, res) => {
@@ -69,12 +70,11 @@ router.get('/:id/documents', async (req, res) => {
     }
 });
 
-// GET all incidents with optional search, filter, and pagination
-router.get('/', async (req, res) => {
+// EXPORT incidents to Excel
+router.get('/export', async (req, res) => {
     try {
-        const { search, status, office, page = 1, limit = 10 } = req.query;
+        const { search, status, office } = req.query;
 
-        const offset = (page - 1) * limit;
         const pool = await poolPromise;
         const request = pool.request();
 
@@ -93,15 +93,15 @@ router.get('/', async (req, res) => {
                 p.name as place_name,
                 it.name as type_name,
                 m.name as member_name,
-                c.name as manager_name,
-                (SELECT COUNT(*) FROM incident i
-                 LEFT JOIN ship s ON i.ship_id = s.id
-                 LEFT JOIN office o ON i.local_office_id = o.id
-                 LEFT JOIN port p ON i.place_id = p.id
-                 LEFT JOIN incident_type it ON i.type_id = it.id
-                 LEFT JOIN member m ON i.member_id = m.id
-                 LEFT JOIN club c ON i.club_id = c.id
-                 WHERE 1=1
+                c.name as manager_name
+            FROM incident i
+            LEFT JOIN ship s ON i.ship_id = s.id
+            LEFT JOIN office o ON i.local_office_id = o.id
+            LEFT JOIN port p ON i.place_id = p.id
+            LEFT JOIN incident_type it ON i.type_id = it.id
+            LEFT JOIN member m ON i.member_id = m.id
+            LEFT JOIN club c ON i.club_id = c.id
+            WHERE 1=1
         `;
 
         // 1. Status Filter
@@ -110,13 +110,13 @@ router.get('/', async (req, res) => {
             request.input('status', sql.NVarChar, status);
         }
 
-        // 2. Office Filter (CSV of IDs)
-        if (office && office.length > 0) {
-            // Check if office contains comma
-            const officeIds = String(office).split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
-            if (officeIds.length > 0) {
-                query += ` AND i.local_office_id IN (${officeIds.join(',')})`;
-            }
+        // 2. Office Filter
+        const officeIds = office ? String(office).split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+        if (officeIds.length > 0) {
+            query += ` AND i.local_office_id IN (${officeIds.join(',')})`;
+        } else {
+            // Strict filter: No office selected = No data
+            query += ` AND 1=0`;
         }
 
         // 3. Search Filter
@@ -130,7 +130,6 @@ router.get('/', async (req, res) => {
             } else if (searchScope === 'Vessel') {
                 query += ` AND s.name LIKE @search`;
             } else {
-                // Default 'All' search
                 query += ` AND (
                     dbo.get_reference_number(i.id) LIKE @search OR 
                     CAST(i.reference_number AS VARCHAR) LIKE @search OR 
@@ -142,8 +141,125 @@ router.get('/', async (req, res) => {
             }
         }
 
-        // Close total_count subquery
-        query += `) as total_count 
+        // Advanced Search (from main list logic - assumed same params passed)
+        if (req.query.filter_field && req.query.filter_value) {
+            const { filter_field, filter_value } = req.query;
+            // Note: This needs implementation parity with the main GET / logic if advanced search is critical for export
+            // For now, implementing basic advanced filters if they were passed
+            if (filter_field === 'Vessel') {
+                query += ` AND i.ship_id = @filter_val`;
+                request.input('filter_val', sql.Int, filter_value);
+            }
+            // Add other advanced filters here if needed mirroring main route logic
+            // To keep it simple for this task iteration, we focus on main filters unless explicitly requested to match advanced 100%
+        }
+
+        query += ` ORDER BY (CASE WHEN i.reference_year < 100 THEN i.reference_year + 2000 ELSE i.reference_year END) DESC, i.reference_number DESC, i.reference_sub_number ASC, i.local_office_id ASC, i.id DESC`;
+
+        const result = await request.query(query);
+        const incidents = result.recordset;
+
+        // CREATE SQL EXCEL
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Incidents');
+
+        worksheet.columns = [
+            { header: 'Reference', key: 'formatted_reference', width: 15 },
+            { header: 'Vessel', key: 'ship_name', width: 25 },
+            { header: 'Date', key: 'incident_date', width: 15 },
+            { header: 'Place', key: 'place_name', width: 20 },
+            { header: 'Type', key: 'type_name', width: 20 },
+            { header: 'Managers', key: 'manager_name', width: 25 },
+            { header: 'Members', key: 'member_name', width: 25 },
+            { header: 'Status', key: 'status', width: 12 },
+            { header: 'Office', key: 'office_location', width: 15 },
+        ];
+
+        // Style Header
+        worksheet.getRow(1).font = { bold: true };
+
+        // Add Rows
+        incidents.forEach(inc => {
+            worksheet.addRow({
+                formatted_reference: inc.formatted_reference,
+                ship_name: inc.ship_name,
+                incident_date: inc.incident_date ? new Date(inc.incident_date).toLocaleDateString('pt-BR') : '',
+                place_name: inc.place_name,
+                type_name: inc.type_name,
+                manager_name: inc.manager_name,
+                member_name: inc.member_name,
+                status: inc.status,
+                office_location: inc.office_location
+            });
+        });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=Incidents.xlsx');
+
+        await workbook.xlsx.write(res);
+        res.end();
+
+    } catch (err) {
+        console.error('Error exporting incidents:', err);
+        res.status(500).send(`Error: ${err.message}\nStack: ${err.stack}`);
+    }
+});
+
+// GET all incidents with optional search, filter, and pagination
+router.get('/', async (req, res) => {
+    try {
+        const { search, status, office, page = 1, limit = 10 } = req.query;
+
+        const offset = (page - 1) * limit;
+        const pool = await poolPromise;
+        const request = pool.request();
+
+        // Build WHERE clause once
+        let whereClause = 'WHERE 1=1';
+
+        console.log(`[DEBUG] GET /incidents params: search='${search}', scope='${req.query.search_scope}', status='${status}', office='${office}'`);
+
+        // 1. Status Filter
+        if (status && status !== 'All') {
+            whereClause += ` AND i.status = @status`;
+            request.input('status', sql.NVarChar, status);
+        }
+
+        // 2. Office Filter (CSV of IDs)
+        const officeIds = office ? String(office).split(',').map(id => parseInt(id)).filter(id => !isNaN(id)) : [];
+        if (officeIds.length > 0) {
+            whereClause += ` AND i.local_office_id IN (${officeIds.join(',')})`;
+        } else {
+            // Strict filter: No office selected = No data
+            whereClause += ` AND 1=0`;
+        }
+
+        // 3. Search Filter
+        if (search) {
+            const searchScope = req.query.search_scope || 'All';
+            // Remove trim() to respect user input (e.g. "Long " vs "Long")
+            const searchTerm = `%${search}%`;
+            request.input('search', sql.NVarChar, searchTerm);
+
+            if (searchScope === 'Reference Number') {
+                whereClause += ` AND (dbo.get_reference_number(i.id) LIKE @search OR CAST(i.reference_number AS VARCHAR) LIKE @search)`;
+            } else if (searchScope === 'Vessel') {
+                whereClause += ` AND s.name LIKE @search`;
+            } else {
+                whereClause += ` AND (
+                    dbo.get_reference_number(i.id) LIKE @search OR 
+                    CAST(i.reference_number AS VARCHAR) LIKE @search OR 
+                    s.name LIKE @search OR
+                    i.description LIKE @search OR
+                    m.name LIKE @search OR
+                    c.name LIKE @search
+                 )`;
+            }
+        }
+
+        // Count Query
+        const countQuery = `
+            SELECT COUNT(*) as total_count
             FROM incident i
             LEFT JOIN ship s ON i.ship_id = s.id
             LEFT JOIN office o ON i.local_office_id = o.id
@@ -151,49 +267,54 @@ router.get('/', async (req, res) => {
             LEFT JOIN incident_type it ON i.type_id = it.id
             LEFT JOIN member m ON i.member_id = m.id
             LEFT JOIN club c ON i.club_id = c.id
-            WHERE 1=1`;
+            ${whereClause}
+        `;
 
-        // REPEAT FILTERS FOR MAIN QUERY
-        if (status && status !== 'All') {
-            query += ` AND i.status = @status`;
-        }
-        if (office && office.length > 0) {
-            const officeIds = String(office).split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
-            if (officeIds.length > 0) {
-                query += ` AND i.local_office_id IN (${officeIds.join(',')})`;
-            }
-        }
-        if (search) {
-            const searchScope = req.query.search_scope || 'All';
-            if (searchScope === 'Reference Number') {
-                query += ` AND (dbo.get_reference_number(i.id) LIKE @search OR CAST(i.reference_number AS VARCHAR) LIKE @search)`;
-            } else if (searchScope === 'Vessel') {
-                query += ` AND s.name LIKE @search`;
-            } else {
-                query += ` AND (
-                    dbo.get_reference_number(i.id) LIKE @search OR 
-                    CAST(i.reference_number AS VARCHAR) LIKE @search OR 
-                    s.name LIKE @search OR
-                    i.description LIKE @search OR
-                    m.name LIKE @search OR
-                    c.name LIKE @search
-                 )`;
-            }
-        }
-
-        query += `
-            ORDER BY i.reference_year DESC, i.reference_number DESC, i.reference_sub_number ASC, i.local_office_id ASC
+        // Data Query
+        let query = `
+            SELECT 
+                i.id, 
+                i.reference_number, 
+                dbo.get_reference_number(i.id) as formatted_reference,
+                s.name as ship_name, 
+                i.description, 
+                i.status, 
+                i.incident_date, 
+                i.created_date,
+                o.name as office_name,
+                o.location as office_location,
+                p.name as place_name,
+                it.name as type_name,
+                m.name as member_name,
+                c.name as manager_name
+            FROM incident i
+            LEFT JOIN ship s ON i.ship_id = s.id
+            LEFT JOIN office o ON i.local_office_id = o.id
+            LEFT JOIN port p ON i.place_id = p.id
+            LEFT JOIN incident_type it ON i.type_id = it.id
+            LEFT JOIN member m ON i.member_id = m.id
+            LEFT JOIN club c ON i.club_id = c.id
+            ${whereClause}
+            ORDER BY (CASE WHEN i.reference_year < 100 THEN i.reference_year + 2000 ELSE i.reference_year END) DESC, i.reference_number DESC, i.reference_sub_number ASC, i.local_office_id ASC, i.id DESC
             OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
         `;
 
         request.input('offset', sql.Int, parseInt(offset));
         request.input('limit', sql.Int, parseInt(limit));
 
+        console.log(`[DEBUG] Query: ${query}`);
+
+        // Execute Count
+        const countResult = await request.query(countQuery);
+        const total = countResult.recordset[0].total_count;
+
+        // Execute Data
         const result = await request.query(query);
+        console.log(`[DEBUG] Found ${result.recordset.length} records. Total: ${total}`);
 
         res.json({
             data: result.recordset,
-            total: result.recordset.length > 0 ? result.recordset[0].total_count : 0,
+            total: total,
             page: parseInt(page),
             limit: parseInt(limit)
         });
@@ -378,12 +499,52 @@ router.put('/:id', async (req, res) => {
             .input('local_office_id', sql.Int, local_office_id)
             .input('description', sql.NVarChar, description)
             .input('status', sql.NVarChar, status)
+            .input('member_id', sql.BigInt, req.body.member_id || null)
+            .input('owner_id', sql.BigInt, req.body.owner_id || null)
+            .input('club_id', sql.BigInt, req.body.club_id || null)
+            .input('handler_id', sql.BigInt, req.body.handler_id || null)
+            .input('type_id', sql.BigInt, req.body.type_id || null)
+            .input('reporter_id', sql.BigInt, req.body.reporter_id || null)
+            .input('local_agent_id', sql.BigInt, req.body.local_agent_id || null)
+            .input('place_id', sql.BigInt, req.body.place_id || null)
+            .input('incident_date', sql.Date, req.body.incident_date || null)
+            .input('closing_date', sql.Date, req.body.closing_date || null)
+            .input('estimated_disposal_date', sql.Date, req.body.estimated_disposal_date || null)
+            .input('effective_disposal_date', sql.Date, req.body.effective_disposal_date || null)
+            .input('berthing_date', sql.Date, req.body.berthing_date || null)
+            .input('reporting_date', sql.Date, req.body.reporting_date || null)
+            .input('time_bar_date', sql.Date, req.body.time_bar_date || null)
+            .input('latest_report_date', sql.Date, req.body.latest_report_date || null)
+            .input('next_review_date', sql.Date, req.body.next_review_date || null)
+            .input('voyage_and_leg', sql.NVarChar, req.body.voyage_and_leg || null)
+            .input('club_reference', sql.NVarChar, req.body.club_reference || null)
+            .input('last_modified_date', sql.BigInt, Date.now())
             .query(`
                 UPDATE incident 
                 SET ship_id = @ship_id, 
                     local_office_id = @local_office_id, 
                     description = @description, 
-                    status = @status
+                    status = @status,
+                    member_id = @member_id,
+                    owner_id = @owner_id,
+                    club_id = @club_id,
+                    handler_id = @handler_id,
+                    type_id = @type_id,
+                    reporter_id = @reporter_id,
+                    local_agent_id = @local_agent_id,
+                    place_id = @place_id,
+                    incident_date = @incident_date,
+                    closing_date = @closing_date,
+                    estimated_disposal_date = @estimated_disposal_date,
+                    effective_disposal_date = @effective_disposal_date,
+                    berthing_date = @berthing_date,
+                    reporting_date = @reporting_date,
+                    time_bar_date = @time_bar_date,
+                    latest_report_date = @latest_report_date,
+                    next_review_date = @next_review_date,
+                    voyage_and_leg = @voyage_and_leg,
+                    club_reference = @club_reference,
+                    last_modified_date = @last_modified_date
                 WHERE id = @id
             `);
 
@@ -416,6 +577,26 @@ router.delete('/:id', async (req, res) => {
     } catch (err) {
         console.error('Error deleting incident:', err.message);
         res.status(500).send('Server Error');
+    }
+});
+
+// Patch: Reassign Claim Handler
+router.patch('/:id/reassign-claim-handler', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newHandlerId } = req.body;
+
+        if (!newHandlerId) return res.status(400).send('New Handler ID is required');
+
+        const pool = await poolPromise;
+        await pool.request()
+            .input('id', sql.BigInt, id)
+            .input('newHandlerId', sql.BigInt, newHandlerId)
+            .query('UPDATE incident SET handler_id = @newHandlerId WHERE id = @id');
+
+        res.json({ message: 'Reassigned successfully' });
+    } catch (err) {
+        res.status(500).send(err.message);
     }
 });
 

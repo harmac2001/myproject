@@ -163,7 +163,11 @@ export default function InvoiceTab({ incidentId, incident }) {
         try {
             const res = await fetch('http://localhost:5000/api/options/contacts')
             const data = await res.json()
-            setContacts(data)
+            const formattedData = data.map(c => ({
+                ...c,
+                formattedName: c.email ? `${c.name} (${c.email})` : c.name
+            }))
+            setContacts(formattedData)
         } catch (err) {
             console.error('Error fetching contacts:', err)
         }
@@ -611,14 +615,14 @@ export default function InvoiceTab({ incidentId, incident }) {
                     <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
                             <tr>
-                                <th className="px-4 py-3">Invoice #</th>
-                                <th className="px-4 py-3 text-right">Expenses</th>
-                                <th className="px-4 py-3 text-right">Fees</th>
-                                <th className="px-4 py-3 text-right">Value</th>
-                                <th className="px-4 py-3">Settlement Date</th>
-                                <th className="px-4 py-3">Next Chasing Date</th>
-                                <th className="px-4 py-3">Remarks</th>
-                                <th className="px-4 py-3 text-right">Action</th>
+                                <th className="px-2 py-3 w-24">Invoice #</th>
+                                <th className="px-2 py-3 text-right w-24">Expenses</th>
+                                <th className="px-2 py-3 text-right w-24">Fees</th>
+                                <th className="px-2 py-3 text-right w-24">Value</th>
+                                <th className="px-2 py-3 w-32">Settlement</th>
+                                <th className="px-2 py-3 w-32">Next Chasing</th>
+                                <th className="px-2 py-3 min-w-[300px]">Remarks</th>
+                                <th className="px-2 py-3 text-right w-20">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -632,38 +636,38 @@ export default function InvoiceTab({ incidentId, incident }) {
                                         setPrintUrl(null)
                                         setSelectedInvoice(inv)
                                     }}>
-                                        <td className="px-4 py-3 font-medium text-blue-600">
+                                        <td className="px-2 py-3 font-medium text-blue-600 text-xs">
                                             {inv.formatted_invoice_number || 'DRAFT'}
                                         </td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-2 py-3 text-right text-xs">
                                             {(inv.expenses_total || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                         </td>
-                                        <td className="px-4 py-3 text-right">
+                                        <td className="px-2 py-3 text-right text-xs">
                                             {(inv.correspondent_fees_total || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                         </td>
-                                        <td className="px-4 py-3 text-right font-medium">
+                                        <td className="px-2 py-3 text-right font-medium text-xs">
                                             {(inv.invoice_total || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-2 py-3">
                                             <DateInput
                                                 placeholder=""
-                                                className="px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500 w-[120px] h-8"
+                                                className="px-1 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:border-blue-500 w-full h-7"
                                                 value={inv.settlement_date}
                                                 onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => handleSettlementDateChange(e, inv.id)}
                                             />
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-2 py-3">
                                             <DateInput
                                                 placeholder=""
-                                                className={`px-2 py-1 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500 w-[120px] h-8 ${inv.settlement_date ? 'line-through text-slate-400 bg-slate-50' : ''}`}
+                                                className={`px-1 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:border-blue-500 w-full h-7 ${inv.settlement_date ? 'line-through text-slate-400 bg-slate-50' : ''}`}
                                                 value={inv.next_chasing_date}
                                                 onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => handleChasingDateChange(e, inv.id)}
                                                 disabled={!!inv.settlement_date}
                                             />
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-2 py-3">
                                             <div className="flex items-center gap-2">
                                                 <input
                                                     type="text"
@@ -674,12 +678,10 @@ export default function InvoiceTab({ incidentId, incident }) {
                                                     onBlur={(e) => handleRemarksBlur(e, inv.id)}
                                                     placeholder="Add remarks..."
                                                 />
-                                                {inv.remarks && (
-                                                    <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                                                )}
+                                                {/* Warning icon removed as per request */}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3 text-right flex justify-end gap-2">
+                                        <td className="px-2 py-3 text-right flex justify-end gap-2">
                                             {!inv.invoice_number && (
                                                 <button
                                                     onClick={(e) => handleDeleteInvoice(e, inv.id)}
@@ -689,7 +691,7 @@ export default function InvoiceTab({ incidentId, incident }) {
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
                                             )}
-                                            <button className="text-blue-600 hover:underline">View</button>
+                                            <button className="text-blue-600 hover:underline text-xs">View</button>
                                         </td>
                                     </tr>
                                 ))
@@ -848,10 +850,11 @@ export default function InvoiceTab({ incidentId, incident }) {
                                 value={invoiceForm.club_contact_id}
                                 onChange={(val) => setInvoiceForm({ ...invoiceForm, club_contact_id: val })}
                                 placeholder="Select Contact..."
-                                labelKey="name"
+                                labelKey="formattedName"
                                 allowCreate={true}
                                 onCreateNew={handleCreateContact}
                                 onDelete={handleDeleteContact}
+                                onEdit={handleEditContact}
                             />
                         ) : (
                             <div className="flex flex-col">
@@ -881,31 +884,17 @@ export default function InvoiceTab({ incidentId, incident }) {
                     <div className="flex flex-col">
                         <span className="text-sm text-slate-500">Origin Contact (Office) <span className="text-red-500">*</span></span>
                         {isEditingInvoice ? (
-                            <>
-                                <SearchableSelect
-                                    options={contacts}
-                                    value={invoiceForm.office_contact_id}
-                                    onChange={(val) => setInvoiceForm({ ...invoiceForm, office_contact_id: val })}
-                                    placeholder="Select Contact..."
-                                    labelKey="name"
-                                    allowCreate={true}
-                                    onCreateNew={handleCreateContact}
-                                    onDelete={handleDeleteContact}
-                                />
-                                <div className="flex justify-between items-start mt-1">
-                                    <span className="text-xs text-slate-500">
-                                        {contacts.find(c => c.id === invoiceForm.office_contact_id)?.email || ''}
-                                    </span>
-                                    {invoiceForm.office_contact_id && (
-                                        <button
-                                            onClick={() => handleEditContact(invoiceForm.office_contact_id)}
-                                            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                                        >
-                                            <Edit2 className="h-3 w-3" /> Edit
-                                        </button>
-                                    )}
-                                </div>
-                            </>
+                            <SearchableSelect
+                                options={contacts}
+                                value={invoiceForm.office_contact_id}
+                                onChange={(val) => setInvoiceForm({ ...invoiceForm, office_contact_id: val })}
+                                placeholder="Select Contact..."
+                                labelKey="formattedName"
+                                allowCreate={true}
+                                onCreateNew={handleCreateContact}
+                                onDelete={handleDeleteContact}
+                                onEdit={handleEditContact}
+                            />
                         ) : (
                             <div className="flex flex-col">
                                 <span className="font-medium">{selectedInvoice.office_contact_name || '-'}</span>
