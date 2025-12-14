@@ -6,6 +6,10 @@ const { sql, poolPromise } = require('../db');
 router.get('/', async (req, res) => {
     try {
         const { search, status, office, page = 1, limit = 10 } = req.query;
+        // Debug logging
+        const fs = require('fs');
+        fs.appendFileSync('server_debug.log', `[GET /] Params: ${JSON.stringify({ search, status, office, page, limit })}\n`);
+
         const offset = (page - 1) * limit;
         const pool = await poolPromise;
         const request = pool.request();
@@ -38,6 +42,8 @@ router.get('/', async (req, res) => {
                 i.time_bar_date,
                 i.latest_report_date,
                 i.next_review_date,
+                i.created_date,
+                i.last_modified_date,
                 s.name as ship_name,
                 m.name as member_name,
                 p.name as place_name,
@@ -415,20 +421,23 @@ router.post('/', async (req, res) => {
             .input('time_bar_date', sql.Date, time_bar_date || null)
             .input('latest_report_date', sql.Date, latest_report_date || null)
             .input('next_review_date', sql.Date, next_review_date || null)
+            .input('now', sql.BigInt, Date.now())
             .query(`
                 INSERT INTO incident (
                     reference_number, reference_year, reference_sub_number, incident_date, status, description, 
                     ship_id, member_id, owner_id, club_id, handler_id,
                     local_office_id, type_id, reporter_id, local_agent_id, place_id,
                     closing_date, estimated_disposal_date, berthing_date, voyage_and_leg,
-                    club_reference, reporting_date, time_bar_date, latest_report_date, next_review_date
+                    club_reference, reporting_date, time_bar_date, latest_report_date, next_review_date,
+                    created_date, last_modified_date
                 )
                 VALUES (
                     @reference_number, @reference_year, @reference_sub_number, @incident_date, @status, @description, 
                     @ship_id, @member_id, @owner_id, @club_id, @handler_id,
                     @local_office_id, @type_id, @reporter_id, @local_agent_id, @place_id,
                     @closing_date, @estimated_disposal_date, @berthing_date, @voyage_and_leg,
-                    @club_reference, @reporting_date, @time_bar_date, @latest_report_date, @next_review_date
+                    @club_reference, @reporting_date, @time_bar_date, @latest_report_date, @next_review_date,
+                    @now, @now
                 );
                 SELECT SCOPE_IDENTITY() AS id;
             `);
@@ -748,21 +757,25 @@ router.post('/:id/subincident', async (req, res) => {
             .input('reporting_date', sql.Date, currentIncident.reporting_date)
             .input('time_bar_date', sql.Date, currentIncident.time_bar_date)
             .input('latest_report_date', sql.Date, currentIncident.latest_report_date)
+            .input('latest_report_date', sql.Date, currentIncident.latest_report_date)
             .input('next_review_date', sql.Date, currentIncident.next_review_date)
+            .input('now', sql.BigInt, Date.now())
             .query(`
                 INSERT INTO incident (
                     reference_number, reference_year, reference_sub_number, incident_date, status, description, 
                     ship_id, member_id, owner_id, club_id, handler_id,
                     local_office_id, type_id, reporter_id, local_agent_id, place_id,
                     closing_date, estimated_disposal_date, berthing_date, voyage_and_leg,
-                    club_reference, reporting_date, time_bar_date, latest_report_date, next_review_date
+                    club_reference, reporting_date, time_bar_date, latest_report_date, next_review_date,
+                    created_date, last_modified_date
                 )
                 VALUES (
                     @reference_number, @reference_year, @reference_sub_number, @incident_date, @status, @description, 
                     @ship_id, @member_id, @owner_id, @club_id, @handler_id,
                     @local_office_id, @type_id, @reporter_id, @local_agent_id, @place_id,
                     @closing_date, @estimated_disposal_date, @berthing_date, @voyage_and_leg,
-                    @club_reference, @reporting_date, @time_bar_date, @latest_report_date, @next_review_date
+                    @club_reference, @reporting_date, @time_bar_date, @latest_report_date, @next_review_date,
+                    @now, @now
                 );
                 SELECT SCOPE_IDENTITY() AS id;
             `);

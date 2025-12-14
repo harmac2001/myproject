@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Save, Edit2 } from 'lucide-react'
 import SearchableSelect from './SearchableSelect'
 import MultiSelect from './MultiSelect'
 
 export default function CargoInformation({ incidentId, isEditing: parentIsEditing, onClose }) {
-    const [isEditing, setIsEditing] = useState(false)
+    const [isEditing, setIsEditing] = useState(true)
+    const prevParentIsEditing = useRef(parentIsEditing)
+
+    // Sync with parent edit state only when it changes
+    useEffect(() => {
+        if (parentIsEditing !== prevParentIsEditing.current) {
+            setIsEditing(parentIsEditing)
+            prevParentIsEditing.current = parentIsEditing
+        }
+    }, [parentIsEditing])
+
     const [saving, setSaving] = useState(false)
     const [cargoExists, setCargoExists] = useState(false)
 

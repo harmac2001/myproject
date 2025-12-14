@@ -1,0 +1,9 @@
+Connected to SQL Server
+┌─────────┬─────────────────┬───────────┐
+│ (index) │ COLUMN_NAME     │ DATA_TYPE │
+├─────────┼─────────────────┼───────────┤
+│ 0       │ 'correspondent' │ 'int'     │
+│ 1       │ 'id'            │ 'bigint'  │
+│ 2       │ 'name'          │ 'varchar' │
+│ 3       │ 'email'         │ 'varchar' │
+└─────────┴─────────────────┴───────────┘

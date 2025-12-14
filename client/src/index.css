@@ -27,3 +27,5 @@
         @apply bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden;
     }
 }
+
+/* Hide text in empty date inputs but keep icon visible */

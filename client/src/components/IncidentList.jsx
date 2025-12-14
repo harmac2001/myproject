@@ -122,15 +122,15 @@ export default function IncidentList() {
         'Client',
         'Consultant',
         'Incident Reported By',
-        'Place of Incident',
-        'Port of Discharge',
-        'Port of Loading',
         'Local Agent',
         'Loss Cause',
         'Loss Type',
         'Members/Managers',
-        'Status',
+        'Place of Incident',
+        'Port of Discharge',
+        'Port of Loading',
         'Receiver/Shipper',
+        'Status',
         'Type of Incident',
         'Vessel'
     ]
@@ -166,7 +166,8 @@ export default function IncidentList() {
                     { id: 'Closed', name: 'Closed' },
                     { id: 'Repudiated', name: 'Repudiated' },
                     { id: 'Withdrawn', name: 'Withdrawn' },
-                    { id: 'Outstanding', name: 'Outstanding' }
+                    { id: 'Outstanding', name: 'Outstanding' },
+                    { id: 'Discarded', name: 'Discarded' }
                 ]);
                 return;
             default: return;
@@ -305,6 +306,7 @@ export default function IncidentList() {
             case 'CLOSED':
             case 'REPUDIATED':
             case 'WITHDRAWN':
+            case 'DISCARDED':
                 return 'bg-slate-100 text-slate-700 ring-slate-600/20'
             default:
                 return 'bg-gray-100 text-gray-700 ring-gray-600/20'
@@ -375,7 +377,7 @@ export default function IncidentList() {
                                     setAdvancedSearchCategory('')
                                     setAdvancedSearchValue('')
                                 }}
-                                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md border border-slate-300 transition-colors duration-200 flex items-center gap-2"
+                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg border border-slate-300 transition-colors duration-200 flex items-center gap-2"
                                 title="Reset all search filters"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

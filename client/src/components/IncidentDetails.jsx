@@ -15,6 +15,7 @@ import EditAgentModal from './EditAgentModal'
 import ReassignMemberModal from './ReassignMemberModal'
 import ReassignAgentModal from './ReassignAgentModal'
 import ExpensesTab from './ExpensesTab'
+import InvoiceTab from './InvoiceTab'
 import Header from './Header'
 
 export default function IncidentDetails() {
@@ -29,7 +30,7 @@ export default function IncidentDetails() {
     const [saving, setSaving] = useState(false)
     const [formattedReference, setFormattedReference] = useState('')
     const [activeTab, setActiveTab] = useState('details')
-    const [openTabs, setOpenTabs] = useState(['details', 'expenses'])
+    const [openTabs, setOpenTabs] = useState(isNew ? ['details'] : ['details', 'expenses', 'invoice'])
     const [hasCargo, setHasCargo] = useState(false)
     const [hasClaim, setHasClaim] = useState(false)
     const [hasComments, setHasComments] = useState(false)
@@ -50,6 +51,7 @@ export default function IncidentDetails() {
     const [deletingMemberId, setDeletingMemberId] = useState(null)
     const [deletingMemberName, setDeletingMemberName] = useState('')
     const [isManager, setIsManager] = useState(false) // Track if we're deleting a manager
+    const [addingMemberType, setAddingMemberType] = useState('member') // 'member' or 'manager'
 
     // Agent modals
     const [showEditAgentModal, setShowEditAgentModal] = useState(false)
@@ -73,7 +75,8 @@ export default function IncidentDetails() {
         { id: 'CLOSED', name: 'CLOSED' },
         { id: 'OUTSTANDING', name: 'OUTSTANDING' },
         { id: 'REPUDIATED', name: 'REPUDIATED' },
-        { id: 'WITHDRAWN', name: 'WITHDRAWN' }
+        { id: 'WITHDRAWN', name: 'WITHDRAWN' },
+        { id: 'DISCARDED', name: 'DISCARDED' }
     ])
 
     // Calculate time bar date (1 year from now) for new incidents
@@ -206,7 +209,9 @@ export default function IncidentDetails() {
                         local_agent_id: data.local_agent_id || '',
                         place_id: data.place_id || '',
                         owner_id: data.owner_id || '',
-                        reference_year: data.reference_year || ''
+                        reference_year: data.reference_year || '',
+                        created_date: data.created_date,
+                        last_modified_date: data.last_modified_date
                     })
                     setFormattedReference(data.formatted_reference || '')
                     setLoading(false)
@@ -375,7 +380,13 @@ export default function IncidentDetails() {
         }
     }
 
-    const handleCreateMember = async (name) => {
+    const handleCreateMember = (name) => {
+        setPendingMemberName(name)
+        setAddingMemberType('member')
+        setShowMemberModal(true)
+    }
+
+    const handleCreateAgent = async (name) => {
         try {
             const response = await fetch('/api/members', {
                 method: 'POST',
@@ -383,13 +394,23 @@ export default function IncidentDetails() {
                 body: JSON.stringify({ name })
             })
             if (response.ok) {
-                const newMember = await response.json()
-                setMembers([...members, newMember])
-                setFormData({ ...formData, member_id: newMember.id })
+                const newAgent = await response.json()
+                setAgents(prev => [...prev, newAgent])
+                setFormData(prev => ({ ...prev, local_agent_id: newAgent.id }))
+            } else {
+                const err = await response.text()
+                alert(`Error creating agent: ${err}`)
             }
         } catch (err) {
-            console.error('Error creating member:', err)
+            console.error('Error creating agent:', err)
+            alert(`Error creating agent: ${err.message}`)
         }
+    }
+
+    const handleCreateManager = (name) => {
+        setPendingMemberName(name)
+        setAddingMemberType('manager')
+        setShowMemberModal(true)
     }
 
     const handleMemberChange = (val) => {
@@ -408,8 +429,12 @@ export default function IncidentDetails() {
     }
 
     const handleMemberSaved = (newMember) => {
-        setMembers([...members, newMember])
-        setFormData({ ...formData, member_id: newMember.id })
+        setMembers(prev => [...prev, newMember])
+        if (addingMemberType === 'manager') {
+            setFormData(prev => ({ ...prev, owner_id: newMember.id }))
+        } else {
+            setFormData(prev => ({ ...prev, member_id: newMember.id }))
+        }
         setShowMemberModal(false)
     }
 
@@ -786,9 +811,19 @@ export default function IncidentDetails() {
                         <Plus className="h-4 w-4" /> Appointment
                     </button>
                 )}
-                <button className="bg-[#0078d4] text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 whitespace-nowrap">
-                    <Plus className="h-4 w-4" /> Invoices
-                </button>
+                {!openTabs.includes('invoice') && (
+                    <button
+                        onClick={() => {
+                            if (!openTabs.includes('invoice')) {
+                                setOpenTabs([...openTabs, 'invoice'])
+                            }
+                            setActiveTab('invoice')
+                        }}
+                        className="bg-[#0078d4] text-white px-3 py-1.5 rounded text-sm font-medium flex items-center gap-1 whitespace-nowrap"
+                    >
+                        <Plus className="h-4 w-4" /> Invoice
+                    </button>
+                )}
                 <button
                     onClick={handleNewSubIncident}
                     disabled={isNew}
@@ -821,7 +856,7 @@ export default function IncidentDetails() {
                 {/* Tabs */}
                 <div className="flex gap-1 flex-1">
                     {openTabs.filter(tab => tab !== 'expenses' || !isNew).sort((a, b) => {
-                        const order = ['details', 'expenses', 'cargo', 'claim', 'comments', 'appointments'];
+                        const order = ['details', 'expenses', 'invoice', 'cargo', 'claim', 'comments', 'appointments'];
                         return order.indexOf(a) - order.indexOf(b);
                     }).map(tab => (
                         <div key={tab} className="relative">
@@ -829,9 +864,9 @@ export default function IncidentDetails() {
                                 className={`px-4 py-2 text-sm font-medium rounded-t-md ${activeTab === tab ? 'bg-[#0078d4] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                 onClick={() => setActiveTab(tab)}
                             >
-                                {tab === 'details' ? 'Details' : tab === 'expenses' ? 'Expenses' : tab === 'cargo' ? 'Cargo Information' : tab === 'claim' ? 'Claim Details' : tab === 'comments' ? 'Comments' : tab === 'appointments' ? 'Appointments' : tab}
+                                {tab === 'details' ? 'Details' : tab === 'expenses' ? 'Expenses' : tab === 'invoice' ? 'Invoice' : tab === 'cargo' ? 'Cargo Information' : tab === 'claim' ? 'Claim Details' : tab === 'comments' ? 'Comments' : tab === 'appointments' ? 'Appointments' : tab}
                             </button>
-                            {tab !== 'details' && tab !== 'expenses' && (
+                            {tab !== 'details' && tab !== 'expenses' && tab !== 'invoice' && (
                                 <button
                                     onClick={() => handleCloseTab(tab)}
                                     className={`absolute -right-1 -top-1 rounded-full p-0.5 ${activeTab === tab ? 'bg-white text-[#0078d4]' : 'bg-slate-300 text-slate-600'} hover:bg-red-500 hover:text-white`}
@@ -842,6 +877,18 @@ export default function IncidentDetails() {
                         </div>
                     ))}
                 </div>
+
+                {/* Dates - Right Aligned */}
+                {(formData.created_date || formData.last_modified_date) && (
+                    <div className="text-xs text-slate-500 ml-4 flex flex-col items-end justify-center min-w-fit">
+                        {formData.created_date && (
+                            <span>Created: {new Date(parseInt(formData.created_date)).toLocaleDateString()}</span>
+                        )}
+                        {formData.last_modified_date && (
+                            <span>Updated: {new Date(parseInt(formData.last_modified_date)).toLocaleDateString()}</span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Content */}
@@ -984,6 +1031,7 @@ export default function IncidentDetails() {
                                     onCreateNew={handleCreateMember}
                                     onEdit={handleEditMember}
                                     onDelete={handleDeleteMember}
+                                    disablePaste={true}
                                 />
                             </div>
                             <div className="col-span-6">
@@ -995,8 +1043,11 @@ export default function IncidentDetails() {
                                     placeholder="Select Manager..."
                                     className="w-full"
                                     disabled={!isEditing}
+                                    allowCreate={isEditing}
+                                    onCreateNew={handleCreateManager}
                                     onEdit={handleEditMember}
                                     onDelete={(id) => handleDeleteMember(id, true)}
+                                    disablePaste={true}
                                 />
                             </div>
 
@@ -1043,6 +1094,8 @@ export default function IncidentDetails() {
                                     placeholder="Select Agent..."
                                     className="w-full"
                                     disabled={!isEditing}
+                                    allowCreate={isEditing}
+                                    onCreateNew={handleCreateAgent}
                                     onEdit={handleEditAgent}
                                     onDelete={handleDeleteAgent}
                                 />
@@ -1101,7 +1154,7 @@ export default function IncidentDetails() {
 
                         {/* Action Buttons */}
                         <div className="mt-6 flex gap-2">
-                            {console.log('Button render:', { isEditing, isNew, id })}
+                            {console.log('Button render:', { isEditing, isNew: !id })}
                             {isEditing ? (
                                 <>
                                     <button
@@ -1114,7 +1167,7 @@ export default function IncidentDetails() {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            if (isNew) {
+                                            if (!id) {
                                                 navigate(-1)
                                             } else {
                                                 setIsEditing(false)
@@ -1126,7 +1179,7 @@ export default function IncidentDetails() {
                                     </button>
                                 </>
                             ) : (
-                                !isNew && (
+                                id && (
                                     <button
                                         onClick={() => setIsEditing(true)}
                                         className="bg-[#0078d4] text-white px-8 py-2 rounded-md text-sm font-medium hover:bg-[#006cbd] flex items-center gap-2"
@@ -1140,15 +1193,15 @@ export default function IncidentDetails() {
                 )}
 
                 {activeTab === 'cargo' && (
-                    <CargoInformation incidentId={id} />
+                    <CargoInformation incidentId={id} isEditing={isEditing} />
                 )}
 
                 {activeTab === 'claim' && (
-                    <ClaimDetails incidentId={id} />
+                    <ClaimDetails incidentId={id} isEditing={isEditing} />
                 )}
 
                 {activeTab === 'comments' && (
-                    <CommentsTab incidentId={id} />
+                    <CommentsTab incidentId={id} isEditing={isEditing} />
                 )}
 
                 {activeTab === 'appointments' && (
@@ -1157,6 +1210,10 @@ export default function IncidentDetails() {
 
                 {activeTab === 'expenses' && (
                     <ExpensesTab incidentId={id} />
+                )}
+
+                {activeTab === 'invoice' && (
+                    <InvoiceTab incidentId={id} incident={formData} />
                 )}
             </div>
 

@@ -1,38 +1,40 @@
---- appointment ---
-id
-created_by_user
-created_date
-last_modified_by_user
-last_modified_date
-appointment_date
-final_survey_date
-invoice_chasing_date
-invoice_received_date
-invoice_sent_to_client_date
-invoice_status
-invoice_value
-invoice_proinde
-preliminary_report_date
-report_delivery_date
-consultant_id
-incident_id
-
---- service_provider ---
-is_consultant
-id
-name
-friendly_name
-rate
-city
-complement
-country
-district
-location
-location_number
-postal_code
-state_or_region
-cnpj
-email
-mobile
-phone
-website
+Connected to SQL Server
+┌─────────┬───────────────────────────────┬───────────┐
+│ (index) │ COLUMN_NAME                   │ DATA_TYPE │
+├─────────┼───────────────────────────────┼───────────┤
+│ 0       │ 'id'                          │ 'bigint'  │
+│ 1       │ 'created_by_user'             │ 'varchar' │
+│ 2       │ 'created_date'                │ 'bigint'  │
+│ 3       │ 'last_modified_by_user'       │ 'varchar' │
+│ 4       │ 'last_modified_date'          │ 'bigint'  │
+│ 5       │ 'archive_date'                │ 'char'    │
+│ 6       │ 'correspondents_fees'         │ 'numeric' │
+│ 7       │ 'covered_from'                │ 'date'    │
+│ 8       │ 'covered_to'                  │ 'date'    │
+│ 9       │ 'description'                 │ 'varchar' │
+│ 10      │ 'expenses'                    │ 'numeric' │
+│ 11      │ 'final_invoice'               │ 'bit'     │
+│ 12      │ 'invoice_date'                │ 'date'    │
+│ 13      │ 'next_chasing_date'           │ 'date'    │
+│ 14      │ 'other_information'           │ 'varchar' │
+│ 15      │ 'recipient_type'              │ 'varchar' │
+│ 16      │ 'invoice_number'              │ 'int'     │
+│ 17      │ 'invoice_year'                │ 'int'     │
+│ 18      │ 'remarks'                     │ 'varchar' │
+│ 19      │ 'settlement_date'             │ 'date'    │
+│ 20      │ 'third_party_total_local_tax' │ 'numeric' │
+│ 21      │ 'third_party_total_vat_tax'   │ 'numeric' │
+│ 22      │ 'total_local_tax'             │ 'numeric' │
+│ 23      │ 'total_vat_tax'               │ 'numeric' │
+│ 24      │ 'version'                     │ 'int'     │
+│ 25      │ 'xml_file_content'            │ 'varchar' │
+│ 26      │ 'xml_file_name'               │ 'varchar' │
+│ 27      │ 'bank_id'                     │ 'bigint'  │
+│ 28      │ 'club_id'                     │ 'bigint'  │
+│ 29      │ 'club_contact_id'             │ 'bigint'  │
+│ 30      │ 'currency_id'                 │ 'bigint'  │
+│ 31      │ 'dollar_rate_id'              │ 'bigint'  │
+│ 32      │ 'incident_id'                 │ 'bigint'  │
+│ 33      │ 'member_id'                   │ 'bigint'  │
+│ 34      │ 'office_contact_id'           │ 'bigint'  │
+└─────────┴───────────────────────────────┴───────────┘
