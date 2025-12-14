@@ -1,26 +1,46 @@
+
 const express = require('express');
 const cors = require('cors');
+const path = require("path");
+
+// Load env vars first
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
+
 const incidentRoutes = require('./routes/incidents');
 const optionsRoutes = require('./routes/options');
 const cargoRoutes = require('./routes/cargo');
 
 const app = express();
-const path = require("path");
-
-require("dotenv").config();
+const passport = require("passport");
+const { bearerStrategy } = require("./authConfig");
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+
+
+app.use(passport.initialize());
+passport.use(bearerStrategy);
+
+// Auth Middleware
+// Auth Middleware
+const authenticateUser = passport.authenticate('oauth-bearer', { session: false });
+
 // Routes
-app.use('/api/incidents', incidentRoutes);
-app.use('/api/options', optionsRoutes);
-app.use('/api/cargo', cargoRoutes);
-app.use('/api/claims', require('./routes/claims'));
-app.use('/api/comments', require('./routes/comments'));
-app.use('/api/appointments', require('./routes/appointments'));
-app.use('/api/expenses', require('./routes/expenses'));
+// Public Health Check
+app.get('/api/health', (req, res) => {
+    res.send('Incident Management API is running');
+});
+
+// Protected Routes
+app.use('/api/incidents', authenticateUser, incidentRoutes);
+app.use('/api/options', authenticateUser, optionsRoutes);
+app.use('/api/cargo', authenticateUser, cargoRoutes);
+app.use('/api/claims', authenticateUser, require('./routes/claims'));
+app.use('/api/comments', authenticateUser, require('./routes/comments'));
+app.use('/api/appointments', authenticateUser, require('./routes/appointments'));
+app.use('/api/expenses', authenticateUser, require('./routes/expenses'));
 
 // Health Check
 app.get('/api/health', (req, res) => {
@@ -41,6 +61,6 @@ if (process.env.NODE_ENV === "production") {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT} `);
 });
 // Trigger restart

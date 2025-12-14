@@ -1,7 +1,8 @@
-import { Search, Plus, ChevronDown } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import leftIcon from '../assets/left_icon.jpg'
+import {ChevronDown, Plus, Search} from 'lucide-react'
+
+import {useEffect, useRef, useState} from 'react'
+import {useNavigate} from 'react-router-dom'
+import {useMsal} from "@azure/msal-react"
 import Header from './Header'
 
 const SearchableSelect = ({ options, value, onChange, placeholder, className }) => {
@@ -174,7 +175,14 @@ export default function IncidentList() {
         if (url) {
             fetch(url)
                 .then(res => res.json())
-                .then(data => setAdvancedSearchOptions(data))
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        setAdvancedSearchOptions(data)
+                    } else {
+                        console.error('API Error (Advanced Options):', data);
+                        setAdvancedSearchOptions([]);
+                    }
+                })
                 .catch(err => console.error(err))
         }
     }, [advancedSearchCategory])
@@ -223,16 +231,29 @@ export default function IncidentList() {
         fetch('/api/options/offices')
             .then(res => res.json())
             .then(data => {
-                setOffices(data)
-                const allOfficeIds = data.map(o => o.id).join(',')
-                setOffice(allOfficeIds)
+                if (Array.isArray(data)) {
+                    setOffices(data)
+                    const allOfficeIds = data.map(o => o.id).join(',')
+                    setOffice(allOfficeIds)
+                } else {
+                    console.error('API Error (Offices):', data);
+                    setOffices([]);
+                    // Optionally show error to user
+                    if (data.error === "Unauthorized") {
+                        // Handle unauthorized specifically if needed
+                    }
+                }
             })
             .catch(err => console.error('Error fetching offices:', err))
     }
 
+    const { accounts } = useMsal();
+
     useEffect(() => {
-        fetchOptions()
-    }, [])
+        if (accounts.length > 0) {
+            fetchOptions()
+        }
+    }, [accounts])
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -377,7 +398,7 @@ export default function IncidentList() {
                     {/* Office Filter Checkboxes */}
                     <div className="flex flex-wrap gap-4 items-center bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                         <span className="text-sm font-medium text-slate-700 mr-2">Offices:</span>
-                        {offices.map((off) => (
+                        {Array.isArray(offices) && offices.map((off) => (
                             <label key={off.id} className="inline-flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
